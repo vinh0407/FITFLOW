@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { STORAGE_KEYS, readStorage, writeStorage } from '../lib/storage';
+import { BMI_PROFILES } from '@fitflow/contracts/bmi';
 
 const bodyParts = ['ALL', 'CHEST', 'BACK', 'SHOULDERS', 'UPPER ARMS', 'WAIST', 'UPPER LEGS'];
 const types = ['STRENGTH', 'BODY WEIGHT', 'CARDIO', 'STRETCHING'];
@@ -19,29 +21,8 @@ function shuffle(items) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-const bmiCases = [
-  { bmi: 18, label: 'LOWER WEIGHT', tone: 'BUILD', focus: 'Foundational strength', note: 'Low-impact strength with extra recovery and steady nutrition support.', preferred: ['body weight', 'dumbbell', 'cable'] },
-  { bmi: 19, label: 'LOWER HEALTHY', tone: 'BUILD', focus: 'Strength + mobility', note: 'Build control and confidence before adding more training volume.', preferred: ['body weight', 'dumbbell', 'cable'] },
-  { bmi: 20, label: 'HEALTHY RANGE', tone: 'BALANCE', focus: 'Full-body strength', note: 'A balanced mix of strength, mobility, and moderate conditioning.', preferred: ['body weight', 'dumbbell', 'barbell', 'cable'] },
-  { bmi: 21, label: 'HEALTHY RANGE', tone: 'BALANCE', focus: 'Strength + conditioning', note: 'Progress gradually while keeping movement quality consistent.', preferred: ['body weight', 'dumbbell', 'barbell', 'cable'] },
-  { bmi: 22, label: 'HEALTHY RANGE', tone: 'PERFORM', focus: 'Strength + cardio', note: 'Use a steady strength base and short conditioning finishers.', preferred: ['body weight', 'dumbbell', 'barbell', 'cable'] },
-  { bmi: 23, label: 'HEALTHY RANGE', tone: 'PERFORM', focus: 'Progressive strength', note: 'Increase reps or load slowly while protecting clean form.', preferred: ['body weight', 'dumbbell', 'barbell', 'cable'] },
-  { bmi: 24, label: 'HEALTHY RANGE', tone: 'BALANCE', focus: 'Strength + conditioning', note: 'Keep a balanced week with strength, mobility, and moderate cardio.', preferred: ['body weight', 'dumbbell', 'barbell', 'cable'] },
-  { bmi: 25, label: 'UPPER HEALTHY', tone: 'PROGRESS', focus: 'Joint-friendly strength', note: 'Use controlled reps and build workload without rushing impact.', preferred: ['body weight', 'cable', 'band'] },
-  { bmi: 26, label: 'OVERWEIGHT RANGE', tone: 'PROGRESS', focus: 'Low-impact strength', note: 'Favor stable positions, moderate volume, and repeatable sessions.', preferred: ['body weight', 'cable', 'band'] },
-  { bmi: 27, label: 'OVERWEIGHT RANGE', tone: 'PROGRESS', focus: 'Strength + walking', note: 'Pair full-body strength with accessible, low-impact conditioning.', preferred: ['body weight', 'cable', 'assisted'] },
-  { bmi: 28, label: 'OVERWEIGHT RANGE', tone: 'FOUNDATION', focus: 'Low-impact conditioning', note: 'Keep sessions consistent and increase duration before intensity.', preferred: ['body weight', 'cable', 'assisted'] },
-  { bmi: 29, label: 'OVERWEIGHT RANGE', tone: 'FOUNDATION', focus: 'Mobility + strength', note: 'Prioritize range of motion, controlled strength, and recovery days.', preferred: ['body weight', 'cable', 'assisted'] },
-  { bmi: 30, label: 'HIGHER BMI RANGE', tone: 'FOUNDATION', focus: 'Supported movement', note: 'Choose joint-friendly exercises and consider professional guidance.', preferred: ['body weight', 'assisted', 'cable'] },
-  { bmi: 31, label: 'HIGHER BMI RANGE', tone: 'FOUNDATION', focus: 'Seated + supported strength', note: 'Start with stable positions and short, repeatable movement blocks.', preferred: ['assisted', 'body weight', 'cable'] },
-  { bmi: 32, label: 'HIGHER BMI RANGE', tone: 'FOUNDATION', focus: 'Low-impact movement', note: 'Keep effort conversational and build tolerance one session at a time.', preferred: ['assisted', 'body weight', 'cable'] },
-  { bmi: 33, label: 'HIGHER BMI RANGE', tone: 'FOUNDATION', focus: 'Mobility + daily movement', note: 'Prioritize comfortable range, walking, and gradual strength exposure.', preferred: ['assisted', 'body weight'] },
-  { bmi: 34, label: 'HIGHER BMI RANGE', tone: 'FOUNDATION', focus: 'Gentle full-body work', note: 'Use short sessions, stable exercises, and extra recovery between days.', preferred: ['assisted', 'body weight'] },
-  { bmi: 35, label: 'HIGHER BMI RANGE', tone: 'FOUNDATION', focus: 'Supported full-body work', note: 'Keep intensity gradual and seek qualified guidance before starting.', preferred: ['assisted', 'body weight'] },
-];
-
 function getBmiProfile(bmi) {
-  return bmiCases.find((profile) => profile.bmi === bmi) || null;
+  return BMI_PROFILES.find((profile) => profile.bmi === bmi) || null;
 }
 
 export default function Home() {
@@ -51,12 +32,15 @@ export default function Home() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [dark, setDark] = useState(() => typeof window !== 'undefined' && localStorage.getItem('fitflow-theme') === 'dark');
-  const [height, setHeight] = useState('170');
-  const [weight, setWeight] = useState('70');
-  const [planReady, setPlanReady] = useState(false);
+  const [dark, setDark] = useState(() => readStorage(STORAGE_KEYS.theme, 'light') === 'dark');
+  const [savedProfile, setSavedProfile] = useState(() => readStorage(STORAGE_KEYS.profile, null));
+  const [savedPlan, setSavedPlan] = useState(() => readStorage(STORAGE_KEYS.plan, null));
+  const [workoutHistory, setWorkoutHistory] = useState(() => { const value = readStorage(STORAGE_KEYS.workoutHistory, []); return Array.isArray(value) ? value : []; });
+  const [height, setHeight] = useState(() => String(readStorage(STORAGE_KEYS.profile, {})?.height || '170'));
+  const [weight, setWeight] = useState(() => String(readStorage(STORAGE_KEYS.profile, {})?.weight || '70'));
+  const [planReady, setPlanReady] = useState(() => Boolean(readStorage(STORAGE_KEYS.plan, null)));
   const [currentDay, setCurrentDay] = useState(1);
-  const [planSaved, setPlanSaved] = useState(false);
+  const [planSaved, setPlanSaved] = useState(() => Boolean(readStorage(STORAGE_KEYS.plan, null)));
   const [workoutOpen, setWorkoutOpen] = useState(false);
   const [workoutIndex, setWorkoutIndex] = useState(0);
   const [completedSets, setCompletedSets] = useState(0);
@@ -80,7 +64,7 @@ export default function Home() {
     fetch('/data/exercises.json').then((response) => response.json()).then(setAllExercises).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; localStorage.setItem('fitflow-theme', dark ? 'dark' : 'light'); }, [dark]);
+  useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; writeStorage(STORAGE_KEYS.theme, dark ? 'dark' : 'light'); }, [dark]);
 
   const featured = useMemo(() => {
     if (!allExercises.length) return null;
@@ -106,6 +90,7 @@ export default function Home() {
   const bmi = Number(height) > 0 && Number(weight) > 0 ? Number(weight) / ((Number(height) / 100) ** 2) : 0;
   const roundedBmi = Math.round(bmi);
   const bmiProfile = bmi ? getBmiProfile(roundedBmi) : null;
+  useEffect(() => { if (!planReady || !bmiProfile) return; const profile = { height: Number(height), weight: Number(weight), bmi: roundedBmi, savedAt: new Date().toISOString() }; writeStorage(STORAGE_KEYS.profile, profile); setSavedProfile(profile); }, [planReady, bmiProfile, height, weight, roundedBmi]);
   const planExercises = useMemo(() => {
     if (!bmiProfile) return [];
     const preferred = bmiProfile.preferred;
@@ -115,7 +100,7 @@ export default function Home() {
   }, [allExercises, roundedBmi, bmiProfile]);
   const planDays = Array.from({ length: 7 }, (_, index) => { const rest = index === 2 || index === 6; const count = index % 2 === 0 ? 4 : 3; return { day: index + 1, rest, exercises: rest ? [] : Array.from({ length: count }, (_, offset) => planExercises[(index * 3 + offset) % Math.max(planExercises.length, 1)]).filter(Boolean) }; });
   const selectedDay = planDays[currentDay - 1];
-  const savePlan = () => { localStorage.setItem('fitflow-7-day-plan', JSON.stringify({ height, weight, bmi: roundedBmi, days: planDays })); setPlanSaved(true); };
+  const savePlan = () => { const profile = { height: Number(height), weight: Number(weight), bmi: roundedBmi, savedAt: new Date().toISOString() }; const plan = { ...profile, focus: bmiProfile?.tone || 'BALANCE', days: planDays, savedAt: new Date().toISOString() }; writeStorage(STORAGE_KEYS.profile, profile); writeStorage(STORAGE_KEYS.plan, plan); setSavedProfile(profile); setSavedPlan(plan); setPlanSaved(true); };
   const customPool = customExerciseIds === null ? allExercises.slice(0, 8) : allExercises.filter((exercise) => customExerciseIds.includes(exercise.id));
   const customPickerExercises = useMemo(() => { const needle = customQuery.trim().toLowerCase(); return allExercises.filter((exercise) => !needle || `${exercise.name} ${exercise.body_part} ${exercise.equipment} ${exercise.target}`.toLowerCase().includes(needle)).slice(0, 18); }, [allExercises, customQuery]);
   const customDays = Array.from({ length: Math.min(7, Math.max(1, Number(customDayCount) || 1)) }, (_, index) => ({ day: index + 1, exercises: Array.from({ length: index % 2 === 0 ? 4 : 3 }, (_, offset) => customPool[(index * 2 + offset) % Math.max(customPool.length, 1)]).filter(Boolean) }));
@@ -140,11 +125,12 @@ export default function Home() {
     return shuffle([...uniqueBodyMoves, cardio].filter(Boolean));
   };
   const startWorkout = (exercises = null) => { setSessionExercises(exercises?.length ? exercises : makeNextRep()); setWorkoutIndex(0); setCompletedSets(0); setWorkoutSeconds(0); setWorkoutOpen(true); };
-  const finishSet = () => { if (completedSets < 3) setCompletedSets((value) => value + 1); else if (workoutIndex < workoutExercises.length - 1) { setWorkoutIndex((value) => value + 1); setCompletedSets(0); } else setWorkoutOpen(false); };
+  const finishSet = () => { if (completedSets < 3) setCompletedSets((value) => value + 1); else if (workoutIndex < workoutExercises.length - 1) { setWorkoutIndex((value) => value + 1); setCompletedSets(0); } else { const entry = { completedAt: new Date().toISOString(), durationSeconds: workoutSeconds, exerciseCount: workoutExercises.length, exerciseIds: workoutExercises.map((exercise) => exercise.id) }; const nextHistory = [entry, ...workoutHistory].slice(0, 50); writeStorage(STORAGE_KEYS.workoutHistory, nextHistory); setWorkoutHistory(nextHistory); setWorkoutOpen(false); } };
   const formatTime = (value) => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
 
   return (
     <main className="site-shell">
+      <div className="storage-strip" role="status" aria-label="FITFLOW local storage status"><span>LOCAL-FIRST STORAGE</span><b>{savedProfile ? 'PROFILE SAVED' : 'PROFILE READY'}</b><b>{savedPlan ? 'PLAN SAVED' : 'PLAN NOT SAVED'}</b><b>{workoutHistory.length} WORKOUT{workoutHistory.length === 1 ? '' : 'S'} LOGGED</b></div>
       <header className="site-header"><a className="wordmark" href="#top" aria-label="FITFLOW home"><span className="mark">F</span> FITFLOW</a><nav className="main-nav" aria-label="Main navigation"><a href="#workouts">WORKOUTS</a><a href="#library">EXERCISES</a><a href="#plans">PLANS</a><a href="/nutrition">NUTRITION</a><a href="#custom-plan">TRAINING GUIDE</a><a href="#about">ABOUT</a></nav><button className="theme-toggle" aria-label="Toggle dark mode" onClick={() => setDark((value) => !value)}>{dark ? '☼' : '☾'}</button><button className="donate-button" onClick={() => setDonateOpen(true)}>DONATE <span>↗</span></button></header>
 
       <section className="hero" id="top"><div className="hero-feature"><div className="hero-art">{featured ? <><span className="registration">FITFLOW / DAILY {featured.id}</span><img src={`/media/${featured.gif_url.split('/').pop()}`} alt={`Demonstration of ${featured.name}`} /><span className="art-label">EXERCISE OF THE DAY</span></> : <span className="loading-label">LOADING MOVEMENT...</span>}</div><div className="hero-caption"><span className="hero-number">01</span><h1>START<br /><i>WHERE YOU ARE.</i></h1><p>Simple training plans, clear exercise guidance, and no pressure to be anyone but yourself.</p><a href="#library" className="text-link">EXPLORE THE LIBRARY <span>→</span></a></div></div><div className="hero-stack"><a className="poster poster-red" href="#plans"><span>PROGRAM / 07 DAYS</span><strong>BUILD<br />A BASE</strong><small>STARTER PLAN →</small></a><a className="poster poster-ink" href="#workouts"><span>WORKOUT / 20 MIN</span><strong>NO<br />EXCUSES</strong><small>BODYWEIGHT SESSION →</small></a></div></section>
