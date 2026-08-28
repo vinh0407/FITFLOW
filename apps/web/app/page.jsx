@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { STORAGE_KEYS, readStorage, writeStorage } from '../lib/storage';
 import { BMI_PROFILES } from '@fitflow/contracts/bmi';
+import { useScrollReveal } from '../lib/scroll-reveal';
 
 const bodyParts = ['ALL', 'CHEST', 'BACK', 'SHOULDERS', 'UPPER ARMS', 'WAIST', 'UPPER LEGS'];
 const types = ['STRENGTH', 'BODY WEIGHT', 'CARDIO', 'STRETCHING'];
@@ -26,6 +27,7 @@ function getBmiProfile(bmi) {
 }
 
 export default function Home() {
+  useScrollReveal('.site-shell');
   const [allExercises, setAllExercises] = useState([]);
   const [bodyFilter, setBodyFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('');

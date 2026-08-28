@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { STORAGE_KEYS, readStorage, writeStorage } from '../../lib/storage';
 import { NUTRITION_GROUPS } from '@fitflow/contracts/nutrition';
+import { useScrollReveal } from '../../lib/scroll-reveal';
 
 const categoryLabels = { ALL: 'ALL FOODS', PROTEIN: 'PROTEIN', CARBS: 'CARBS', GREENS: 'GREENS', PLANT: 'PLANT-BASED' };
 const foodNames = {
@@ -25,6 +26,7 @@ const menuTemplate = [
 const buildRandomMenu = () => menuTemplate.map((meal) => ({ ...meal, items: meal.items.map(({ type, grams }) => { const [name, kcal, protein = 0, carbs = 0, fat = 0] = randomFrom(NUTRITION_GROUPS[type]); return { name, type, grams, kcal: Math.round(kcal * grams / 100), protein: Math.round(protein * grams / 100), carbs: Math.round(carbs * grams / 100), fat: Math.round(fat * grams / 100) }; }) }));
 
 export default function NutritionPage() {
+  useScrollReveal('.subpage-shell');
   const [category, setCategory] = useState('ALL');
   const [menu, setMenu] = useState(() => buildRandomMenu());
   const [favoriteFoodIds, setFavoriteFoodIds] = useState(() => { const value = readStorage(STORAGE_KEYS.favorites, []); return Array.isArray(value) ? value : []; });
