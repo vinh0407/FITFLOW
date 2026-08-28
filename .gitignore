@@ -5,6 +5,8 @@ build/
 coverage/
 .turbo/
 .cache/
+.idea/
+*.iml
 
 .env
 .env.*
@@ -15,4 +17,3 @@ coverage/
 *.temp
 .DS_Store
 Thumbs.db
-

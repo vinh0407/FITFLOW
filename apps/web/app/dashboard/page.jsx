@@ -1,0 +1,25 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { STORAGE_KEYS, readStorage } from '../../lib/storage';
+import { useScrollReveal } from '../../lib/scroll-reveal';
+
+function formatDate(value) {
+  if (!value) return 'NOT RECORDED';
+  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(value));
+}
+
+export default function DashboardPage() {
+  useScrollReveal('.dashboard-shell');
+  const [profile] = useState(() => readStorage(STORAGE_KEYS.profile, null));
+  const [plan] = useState(() => readStorage(STORAGE_KEYS.plan, null));
+  const [history] = useState(() => { const value = readStorage(STORAGE_KEYS.workoutHistory, []); return Array.isArray(value) ? value : []; });
+  const [theme, setTheme] = useState(() => readStorage(STORAGE_KEYS.theme, 'light'));
+  const latestWorkout = history[0];
+  const totalMinutes = Math.round(history.reduce((total, item) => total + (Number(item.durationSeconds) || 0), 0) / 60);
+  const recovery = useMemo(() => Math.max(38, Math.min(96, 82 - history.length * 3)), [history.length]);
+
+  useEffect(() => { document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light'; }, [theme]);
+
+  return <main className="dashboard-shell"><header className="dashboard-header"><a className="wordmark" href="/"><span className="mark">F</span> VINCECORE</a><nav aria-label="Dashboard navigation"><a className="active" href="/dashboard">DASHBOARD</a><a href="/#workouts">WORKOUT</a><a href="/nutrition">NUTRITION</a><a href="/#plans">PLAN</a><a href="/#custom-plan">GUIDE</a></nav><button className="dashboard-theme" type="button" onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme">{theme === 'dark' ? 'LIGHT' : 'DARK'}</button></header><section className="dashboard-hero"><div><span className="dashboard-kicker">FITNESS CONTROL / LOCAL SNAPSHOT</span><h1>YOUR<br /><em>NEXT MOVE.</em></h1><p>{plan ? `Your ${plan.bmi} BMI plan is ready. Keep the next session simple and repeatable.` : 'Start with one useful session. Your dashboard will grow from what you actually complete.'}</p><div className="dashboard-actions"><a className="dashboard-primary" href="/#workouts">START WORKOUT <span>→</span></a><a className="dashboard-secondary" href="/#plans">BUILD PLAN</a></div></div><div className="mission-panel"><span>TODAY&apos;S MISSION</span><strong>{plan?.focus || 'BUILD A BASE'}</strong><b>{latestWorkout ? 'RETURN TO THE WORK' : '20 MIN / 5 MOVEMENTS'}</b><small>{latestWorkout ? `Last session ${formatDate(latestWorkout.completedAt)} · ${latestWorkout.exerciseCount || 0} movements` : '4 body-part movements + 1 cardio movement'}</small></div></section><section className="dashboard-metrics" aria-label="Training overview"><div><span>WORKOUTS</span><strong>{history.length}</strong><small>COMPLETED SESSIONS</small></div><div><span>TIME IN MOTION</span><strong>{totalMinutes}<i>MIN</i></strong><small>RECORDED LOCALLY</small></div><div><span>RECOVERY SIGNAL</span><strong>{recovery}<i>%</i></strong><small>ESTIMATED FROM RECENT LOAD</small></div><div><span>BMI PROFILE</span><strong>{profile?.bmi || '—'}</strong><small>{profile ? 'SAVED PROFILE' : 'ADD YOUR PROFILE'}</small></div></section><section className="dashboard-columns"><article className="dashboard-block progress-block"><div className="dashboard-block-heading"><div><span>PROGRESS / RECENT</span><h2>KEEP<br /><em>THE LINE.</em></h2></div><a href="/#workouts">VIEW WORKOUT <span>→</span></a></div>{history.length ? <div className="history-list">{history.slice(0, 5).map((item, index) => <div key={`${item.completedAt}-${index}`}><span>{String(index + 1).padStart(2, '0')}</span><strong>{item.exerciseCount || 0} MOVEMENTS</strong><b>{formatDate(item.completedAt)}</b><small>{Math.round((item.durationSeconds || 0) / 60)} MIN</small></div>)}</div> : <div className="dashboard-empty"><strong>NO WORKOUTS YET.</strong><p>Complete your first session to start building a useful history.</p><a href="/#workouts">START THE FIRST SESSION →</a></div>}</article><article className="dashboard-block recovery-block"><span>RECOVERY / TODAY</span><h2>LET<br /><em>RECOVERY COUNT.</em></h2><div className="recovery-readout"><strong>{recovery}%</strong><span>READY SIGNAL</span></div><p>{recovery > 70 ? 'Your recent load leaves room for a focused session. Keep the form clean and stop before quality drops.' : 'Keep today lighter. Walking, mobility, and controlled work are enough to keep momentum.'}</p><a href="/#custom-plan">FOLLOW THE GUIDE <span>→</span></a></article></section><section className="profile-strip"><div><span>PROFILE / PERSONAL SETTINGS</span><h2>{profile ? 'PROFILE SAVED.' : 'MAKE IT PERSONAL.'}</h2><p>{profile ? `${profile.height} cm · ${profile.weight} kg · BMI ${profile.bmi}` : 'Build a BMI-based plan to give your training a clear starting point.'}</p></div><a href="/#plans">{profile ? 'UPDATE PROFILE →' : 'ADD HEIGHT + WEIGHT →'}</a></section><footer className="dashboard-footer"><span>VINCECORE / TRAIN WITH INTENT.</span><a href="/">BACK TO FITFLOW HOME ↑</a></footer></main>;
+}
