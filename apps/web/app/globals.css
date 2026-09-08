@@ -2948,9 +2948,11 @@ html[data-theme="dark"]
   > .training-table-wrap::-webkit-scrollbar-thumb {
   background: var(--gray-300);
 }
-html[data-theme="dark"] .site-shell > .custom-plan-section .training-table th {
+html[data-theme="dark"] .site-shell > .custom-plan-section .training-table th,
+html[data-theme="dark"] .training-table th {
   background: var(--gray-100);
-  color: var(--ink);
+  color: #111111;
+  font-weight: 800;
 }
 html[data-theme="dark"]
   .site-shell
