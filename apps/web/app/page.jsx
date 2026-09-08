@@ -2603,12 +2603,12 @@ export default function Home() {
           ))}
         </div>
       </section>
-      <nav className="mobile-bottom-nav" aria-label="Điều hướng nhanh">
-        <a href="#top" aria-label="Trang chủ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z" /></svg><small>HOME</small></a>
-        <a href="#workouts" aria-label="Bài tập"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 12h10M3 8v8m4-11v14M17 5v14m4-11v8" /></svg><small>TẬP</small></a>
-        <a href="#library" aria-label="Thư viện bài tập"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 4h6v16H4Zm10 0h6v16h-6ZM4 8h6m4 0h6" /></svg><small>THƯ VIỆN</small></a>
-        <a href="#plans" aria-label="Kế hoạch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 5h16v16H4ZM8 2v6m8-6v6M4 11h16m-12 5h3" /></svg><small>PLAN</small></a>
-        <a href="/nutrition" aria-label="Dinh dưỡng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 3c-4 0-5 4-5 9h5m0-9v18" /></svg><small>ĂN</small></a>
+      <nav className="mobile-bottom-nav" aria-label="Quick navigation">
+        <a href="#top" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z" /></svg><small>HOME</small></a>
+        <a href="#workouts" aria-label="Workouts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M7 12h10M3 8v8m4-11v14M17 5v14m4-11v8" /></svg><small>WORKOUT</small></a>
+        <a href="#library" aria-label="Library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 4h6v16H4Zm10 0h6v16h-6ZM4 8h6m4 0h6" /></svg><small>LIBRARY</small></a>
+        <a href="#plans" aria-label="Plans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 5h16v16H4ZM8 2v6m8-6v6M4 11h16m-12 5h3" /></svg><small>PLAN</small></a>
+        <a href="/nutrition" aria-label="Nutrition"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 3c-4 0-5 4-5 9h5m0-9v18" /></svg><small>NUTRITION</small></a>
       </nav>
       {plan365Open && (
         <div className="modal-backdrop" onClick={() => setPlan365Open(false)}>
