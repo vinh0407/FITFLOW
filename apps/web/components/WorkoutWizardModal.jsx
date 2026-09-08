@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { readUserStorage, writeUserStorage, STORAGE_KEYS } from '../lib/storage.js';
 
 // Sleek, modern technical equipment definitions with minimalist vector wireframes
 const EQUIPMENT_LIST = [
@@ -141,18 +142,18 @@ const EQUIPMENT_LIST = [
 
 // Muscle definitions matching anatomical regions (in pure English)
 const MUSCLE_GROUPS = [
-  { id: 'chest', code: 'PEC', name: 'Chest', target: 'pectorals', bodyPart: 'chest' },
-  { id: 'lats', code: 'LAT', name: 'Lats & Back', target: 'lats', bodyPart: 'back' },
-  { id: 'upper_back', code: 'TRP', name: 'Upper Back & Traps', target: 'traps', bodyPart: 'back' },
-  { id: 'delts', code: 'DLT', name: 'Shoulders', target: 'delts', bodyPart: 'shoulders' },
-  { id: 'biceps', code: 'BIC', name: 'Biceps', target: 'biceps', bodyPart: 'upper arms' },
-  { id: 'triceps', code: 'TRI', name: 'Triceps', target: 'triceps', bodyPart: 'upper arms' },
-  { id: 'abs', code: 'ABS', name: 'Abs & Core', target: 'abs', bodyPart: 'waist' },
-  { id: 'quads', code: 'QUD', name: 'Quadriceps', target: 'quads', bodyPart: 'upper legs' },
-  { id: 'hamstrings', code: 'HAM', name: 'Hamstrings', target: 'hamstrings', bodyPart: 'upper legs' },
-  { id: 'glutes', code: 'GLT', name: 'Glutes', target: 'glutes', bodyPart: 'upper legs' },
-  { id: 'calves', code: 'CAL', name: 'Calves', target: 'calves', bodyPart: 'lower legs' },
-  { id: 'forearms', code: 'ARM', name: 'Forearms', target: 'forearms', bodyPart: 'lower arms' },
+  { id: 'chest', code: 'PEC', name: 'Chest', category: 'push', target: 'pectorals', bodyPart: 'chest' },
+  { id: 'lats', code: 'LAT', name: 'Lats & Back', category: 'pull', target: 'lats', bodyPart: 'back' },
+  { id: 'upper_back', code: 'TRP', name: 'Upper Back & Traps', category: 'pull', target: 'traps', bodyPart: 'back' },
+  { id: 'delts', code: 'DLT', name: 'Shoulders', category: 'push', target: 'delts', bodyPart: 'shoulders' },
+  { id: 'biceps', code: 'BIC', name: 'Biceps', category: 'pull', target: 'biceps', bodyPart: 'upper arms' },
+  { id: 'triceps', code: 'TRI', name: 'Triceps', category: 'push', target: 'triceps', bodyPart: 'upper arms' },
+  { id: 'abs', code: 'ABS', name: 'Abs & Core', category: 'core', target: 'abs', bodyPart: 'waist' },
+  { id: 'quads', code: 'QUD', name: 'Quadriceps', category: 'legs', target: 'quads', bodyPart: 'upper legs' },
+  { id: 'hamstrings', code: 'HAM', name: 'Hamstrings', category: 'legs', target: 'hamstrings', bodyPart: 'upper legs' },
+  { id: 'glutes', code: 'GLT', name: 'Glutes', category: 'legs', target: 'glutes', bodyPart: 'upper legs' },
+  { id: 'calves', code: 'CAL', name: 'Calves', category: 'legs', target: 'calves', bodyPart: 'lower legs' },
+  { id: 'forearms', code: 'ARM', name: 'Forearms', category: 'pull', target: 'forearms', bodyPart: 'lower arms' },
 ];
 
 const PRESETS = [
@@ -164,6 +165,10 @@ const PRESETS = [
 ];
 
 const EXERCISE_COUNT_OPTIONS = [3, 4, 5, 6, 8];
+
+const PUSH_MUSCLES = ['chest', 'delts', 'triceps'];
+const PULL_MUSCLES = ['lats', 'upper_back', 'biceps', 'forearms'];
+const LEG_MUSCLES = ['quads', 'hamstrings', 'glutes', 'calves'];
 
 function titleCase(str = '') {
   return str.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -177,22 +182,50 @@ function exerciseMediaUrl(exercise) {
 export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) {
   const [step, setStep] = useState(1);
   const [selectedEquipment, setSelectedEquipment] = useState(['body weight', 'dumbbell', 'barbell', 'bench']);
-  // Initially completely empty - only selected when user clicks!
+  // Initial muscles is strictly EMPTY (user clicks to select)
   const [selectedMuscles, setSelectedMuscles] = useState([]);
   const [targetExerciseCount, setTargetExerciseCount] = useState(5);
 
   const [catalog, setCatalog] = useState([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
+  // Initial exercises is strictly EMPTY (never auto-picked without user action)
   const [generatedExercises, setGeneratedExercises] = useState([]);
   const [showAddPicker, setShowAddPicker] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [hoveredMuscle, setHoveredMuscle] = useState(null);
   const [previewDetail, setPreviewDetail] = useState(null);
   const [validationNotice, setValidationNotice] = useState('');
+  const [randomBanner, setRandomBanner] = useState('');
 
-  // Load catalog on mount/open
+  // Yesterday training detection state (can be auto-detected from history or toggled)
+  const [yesterdaySplit, setYesterdaySplit] = useState('none'); // 'none' | 'push' | 'pull' | 'legs'
+
+  // Load catalog and check workout history on mount/open
   useEffect(() => {
     if (!isOpen) return;
+
+    // Detect if user worked out yesterday or within the last 36 hours
+    try {
+      const history = readUserStorage(STORAGE_KEYS.workoutHistory, []) || [];
+      if (Array.isArray(history) && history.length > 0) {
+        const last = history[0];
+        const lastDate = last?.date ? new Date(last.date) : null;
+        if (lastDate && !isNaN(lastDate.getTime())) {
+          const diffHours = (Date.now() - lastDate.getTime()) / (1000 * 60 * 60);
+          if (diffHours >= 6 && diffHours <= 40) {
+            const muscles = last.muscles || [];
+            const hasPush = muscles.some((m) => PUSH_MUSCLES.includes(m));
+            const hasPull = muscles.some((m) => PULL_MUSCLES.includes(m));
+            const hasLegs = muscles.some((m) => LEG_MUSCLES.includes(m));
+
+            if (hasPush && !hasPull) setYesterdaySplit('push');
+            else if (hasPull && !hasPush) setYesterdaySplit('pull');
+            else if (hasLegs) setYesterdaySplit('legs');
+          }
+        }
+      }
+    } catch {}
+
     if (catalog.length > 0) return;
     setLoadingCatalog(true);
     fetch('/api/exercises?scope=home&pageSize=36')
@@ -219,7 +252,7 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
     setSelectedEquipment(['body weight']);
   };
 
-  // Toggle muscle selection (completely empty initially, user clicks to toggle)
+  // Toggle muscle selection
   const toggleMuscle = (id) => {
     setValidationNotice('');
     setSelectedMuscles((prev) =>
@@ -230,12 +263,124 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
   const clearMuscles = () => {
     setSelectedMuscles([]);
     setValidationNotice('');
+    setRandomBanner('');
   };
 
   const applyPreset = (presetMuscles) => {
     setValidationNotice('');
     setSelectedMuscles(presetMuscles);
   };
+
+  // Feature 1: RANDOM MUSCLE SPLIT GENERATOR
+  const handleRandomizeMuscles = () => {
+    const splitPool = [
+      { name: 'PULL SPLIT (Lats, Upper Back, Biceps)', muscles: ['lats', 'upper_back', 'biceps'] },
+      { name: 'PUSH SPLIT (Chest, Shoulders, Triceps)', muscles: ['chest', 'delts', 'triceps'] },
+      { name: 'LEGS & CORE (Quads, Hamstrings, Glutes, Abs)', muscles: ['quads', 'hamstrings', 'glutes', 'abs'] },
+      { name: 'UPPER BODY BLAST (Chest, Back, Shoulders, Arms)', muscles: ['chest', 'lats', 'delts', 'biceps', 'triceps'] },
+      { name: 'ANTAGONIST PRESS/PULL (Chest, Lats, Arms)', muscles: ['chest', 'lats', 'biceps', 'triceps'] },
+      { name: 'POSTERIOR CHAIN (Lats, Traps, Glutes, Hamstrings)', muscles: ['lats', 'upper_back', 'glutes', 'hamstrings'] },
+      { name: 'DELTS & ARMS SPECIALIZATION', muscles: ['delts', 'biceps', 'triceps', 'forearms'] },
+    ];
+
+    // Favor picking a split that doesn't conflict with yesterday's training
+    let candidates = splitPool;
+    if (yesterdaySplit === 'push') {
+      candidates = splitPool.filter((s) => !s.muscles.includes('chest'));
+    } else if (yesterdaySplit === 'pull') {
+      candidates = splitPool.filter((s) => !s.muscles.includes('lats'));
+    } else if (yesterdaySplit === 'legs') {
+      candidates = splitPool.filter((s) => !s.muscles.includes('quads'));
+    }
+
+    const picked = candidates[Math.floor(Math.random() * candidates.length)] || splitPool[0];
+    setSelectedMuscles(picked.muscles);
+    setValidationNotice('');
+    setRandomBanner(`🎲 RANDOMIZED SPLIT: ${picked.name}`);
+    setTimeout(() => setRandomBanner(''), 4000);
+  };
+
+  // Feature 2: SMART SYNERGISTIC RECOMMENDATIONS
+  // When pulling or pushing or leg muscles are selected, advise complementary muscles
+  const synergyAdvisory = useMemo(() => {
+    if (selectedMuscles.length === 0) return null;
+
+    const hasPull = selectedMuscles.some((m) => PULL_MUSCLES.includes(m));
+    const hasPush = selectedMuscles.some((m) => PUSH_MUSCLES.includes(m));
+    const hasLegs = selectedMuscles.some((m) => LEG_MUSCLES.includes(m));
+
+    // Pull synergy
+    if (hasPull && !hasPush) {
+      const missingPull = PULL_MUSCLES.filter((m) => !selectedMuscles.includes(m));
+      if (missingPull.length > 0 && missingPull.length <= 3) {
+        const missingLabels = missingPull.map((id) => MUSCLE_GROUPS.find((mg) => mg.id === id)?.name).join(', ');
+        return {
+          type: 'pull',
+          title: 'PULL SYNERGY DETECTED',
+          message: `You selected pulling muscles. Pairing with ${missingLabels} activates the complete kinetic pulling chain for maximum back and arm hypertrophy.`,
+          actionLabel: `+ ADD ${missingPull.map((id) => MUSCLE_GROUPS.find((mg) => mg.id === id)?.name).join(' & ').toUpperCase()}`,
+          onApply: () => setSelectedMuscles((prev) => Array.from(new Set([...prev, ...missingPull]))),
+        };
+      }
+    }
+
+    // Push synergy
+    if (hasPush && !hasPull) {
+      const missingPush = PUSH_MUSCLES.filter((m) => !selectedMuscles.includes(m));
+      if (missingPush.length > 0) {
+        const missingLabels = missingPush.map((id) => MUSCLE_GROUPS.find((mg) => mg.id === id)?.name).join(', ');
+        return {
+          type: 'push',
+          title: 'PUSH SYNERGY DETECTED',
+          message: `You selected pressing muscles. Pairing with ${missingLabels} optimizes anterior chain pressing mechanics and tricep lockout power.`,
+          actionLabel: `+ ADD ${missingPush.map((id) => MUSCLE_GROUPS.find((mg) => mg.id === id)?.name).join(' & ').toUpperCase()}`,
+          onApply: () => setSelectedMuscles((prev) => Array.from(new Set([...prev, ...missingPush]))),
+        };
+      }
+    }
+
+    // Leg synergy
+    if (hasLegs && !hasPush && !hasPull) {
+      const missingLegs = ['hamstrings', 'glutes'].filter((m) => !selectedMuscles.includes(m));
+      if (missingLegs.length > 0 && selectedMuscles.includes('quads')) {
+        return {
+          type: 'legs',
+          title: 'LOWER BODY SYNERGY DETECTED',
+          message: 'Balancing Quadriceps with Hamstrings and Glutes maintains knee joint symmetry and hip extension power.',
+          actionLabel: '+ ADD POSTERIOR CHAIN (HAMSTRINGS & GLUTES)',
+          onApply: () => setSelectedMuscles((prev) => Array.from(new Set([...prev, 'hamstrings', 'glutes']))),
+        };
+      }
+    }
+
+    return null;
+  }, [selectedMuscles]);
+
+  // Feature 3: YESTERDAY TRAINING WARNING CHECK
+  const yesterdayWarning = useMemo(() => {
+    if (yesterdaySplit === 'none') return null;
+
+    if (yesterdaySplit === 'push') {
+      const conflicting = selectedMuscles.filter((m) => PUSH_MUSCLES.includes(m));
+      if (conflicting.length > 0) {
+        const names = conflicting.map((id) => MUSCLE_GROUPS.find((m) => m.id === id)?.name).join(', ');
+        return `RECOVERY ALERT: You trained PUSH yesterday (${names}). These muscles are inside the 48-hour recovery window. Training PULL or LEGS today avoids overtraining.`;
+      }
+    } else if (yesterdaySplit === 'pull') {
+      const conflicting = selectedMuscles.filter((m) => PULL_MUSCLES.includes(m));
+      if (conflicting.length > 0) {
+        const names = conflicting.map((id) => MUSCLE_GROUPS.find((m) => m.id === id)?.name).join(', ');
+        return `RECOVERY ALERT: You trained PULL yesterday (${names}). Today is optimal for PUSH or LEGS to maximize protein synthesis.`;
+      }
+    } else if (yesterdaySplit === 'legs') {
+      const conflicting = selectedMuscles.filter((m) => LEG_MUSCLES.includes(m));
+      if (conflicting.length > 0) {
+        const names = conflicting.map((id) => MUSCLE_GROUPS.find((m) => m.id === id)?.name).join(', ');
+        return `RECOVERY ALERT: You trained LEGS yesterday (${names}). Upper body PUSH or PULL is recommended today.`;
+      }
+    }
+    return null;
+  }, [yesterdaySplit, selectedMuscles]);
 
   // Equipment matching
   const matchesEquipment = (exercise, chosenEq) => {
@@ -267,7 +412,7 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
     return false;
   };
 
-  // Generate workout strictly matching target exercise count & selected muscles
+  // Generate workout only when explicitly triggered by user
   const generateWorkout = () => {
     if (!catalog.length) return;
     const available = catalog.filter((ex) => matchesEquipment(ex, selectedEquipment));
@@ -277,7 +422,6 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
     const usedIds = new Set();
     const activeMuscles = selectedMuscles.length > 0 ? selectedMuscles : ['chest', 'lats', 'quads'];
 
-    // Distribute exercises evenly across selected muscle groups up to targetExerciseCount
     let muscleIdx = 0;
     let attempts = 0;
     while (result.length < targetExerciseCount && attempts < 40) {
@@ -293,7 +437,6 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
       }
     }
 
-    // Fill remaining if needed
     const remaining = pool.filter((ex) => !usedIds.has(ex.id));
     while (result.length < targetExerciseCount && remaining.length > 0) {
       const idx = Math.floor(Math.random() * remaining.length);
@@ -310,11 +453,11 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
       setStep(2);
     } else if (step === 2) {
       if (selectedMuscles.length === 0) {
-        setValidationNotice('PLEASE SELECT AT LEAST ONE MUSCLE GROUP OR CHOOSE A PRESET TO PROCEED.');
+        setValidationNotice('PLEASE SELECT AT LEAST ONE TARGET MUSCLE OR CLICK "RANDOM SPLIT" TO PROCEED.');
         return;
       }
       setValidationNotice('');
-      generateWorkout();
+      // Do NOT auto-pick exercises! Go to step 3 clean so user can generate or pick.
       setStep(3);
     }
   };
@@ -365,6 +508,20 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
   };
 
   const handleFinalStart = () => {
+    // Record to workout history so yesterday's detection remembers it
+    try {
+      const history = readUserStorage(STORAGE_KEYS.workoutHistory, []) || [];
+      const newRecord = {
+        id: `wo_${Date.now()}`,
+        date: new Date().toISOString(),
+        exercises: generatedExercises.map((e) => e.name),
+        muscles: selectedMuscles,
+        equipment: selectedEquipment,
+        exerciseCount: generatedExercises.length,
+      };
+      writeUserStorage(STORAGE_KEYS.workoutHistory, [newRecord, ...history]);
+    } catch {}
+
     if (onStartWorkout) {
       onStartWorkout(generatedExercises);
     }
@@ -392,7 +549,7 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
           </button>
         </header>
 
-        {/* Technical Stepper: completed steps are black/dark gray, active is red */}
+        {/* Technical Stepper: completed steps are dark monochrome, active is hazard red */}
         <nav className="wizard-stepper" aria-label="Workout Builder Stepper">
           <div
             className={`step-node ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}
@@ -403,7 +560,7 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
             </div>
             <div className="step-meta">
               <span className="step-title">EQUIPMENT</span>
-              <span className="step-desc">Select Available Gear</span>
+              <span className="step-desc">Available Gear</span>
             </div>
           </div>
 
@@ -418,7 +575,7 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
             </div>
             <div className="step-meta">
               <span className="step-title">TARGET MUSCLES</span>
-              <span className="step-desc">Choose Focus & Volume</span>
+              <span className="step-desc">Focus & Volume</span>
             </div>
           </div>
 
@@ -427,16 +584,13 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
           <div
             className={`step-node ${step === 3 ? 'active' : ''}`}
             onClick={() => {
-              if (selectedMuscles.length > 0) {
-                generateWorkout();
-                setStep(3);
-              }
+              if (selectedMuscles.length > 0) setStep(3);
             }}
           >
             <div className="step-circle">03</div>
             <div className="step-meta">
               <span className="step-title">EXERCISE MATRIX</span>
-              <span className="step-desc">Review & Start Session</span>
+              <span className="step-desc">Review & Start</span>
             </div>
           </div>
         </nav>
@@ -495,7 +649,7 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
               <div>
                 <h2 id="wizard-title">CHOOSE YOUR TARGET MUSCLES</h2>
                 <p className="instruction-subtitle">
-                  Click anatomical regions to select target muscle groups. Selected areas highlight in red.
+                  Click anatomical regions to select target muscles. Click &quot;RANDOM SPLIT&quot; to auto-generate a balanced split.
                 </p>
               </div>
               <div className="muscle-status-box">
@@ -519,11 +673,80 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
               </div>
             )}
 
+            {/* Random split announcement banner */}
+            {randomBanner && (
+              <div className="wizard-random-banner" role="status">
+                <span className="random-dot" />
+                <span>{randomBanner}</span>
+              </div>
+            )}
+
+            {/* Yesterday Training Detection & Warning */}
+            <div className="yesterday-advisory-container">
+              <div className="yesterday-toggle-bar">
+                <span className="yesterday-label">YESTERDAY LOGGED:</span>
+                <div className="yesterday-chips">
+                  <button
+                    type="button"
+                    className={`yesterday-chip ${yesterdaySplit === 'none' ? 'active' : ''}`}
+                    onClick={() => setYesterdaySplit('none')}
+                  >
+                    REST DAY
+                  </button>
+                  <button
+                    type="button"
+                    className={`yesterday-chip ${yesterdaySplit === 'push' ? 'active' : ''}`}
+                    onClick={() => setYesterdaySplit('push')}
+                  >
+                    PUSH (CHEST/SHOULDERS)
+                  </button>
+                  <button
+                    type="button"
+                    className={`yesterday-chip ${yesterdaySplit === 'pull' ? 'active' : ''}`}
+                    onClick={() => setYesterdaySplit('pull')}
+                  >
+                    PULL (BACK/BICEPS)
+                  </button>
+                  <button
+                    type="button"
+                    className={`yesterday-chip ${yesterdaySplit === 'legs' ? 'active' : ''}`}
+                    onClick={() => setYesterdaySplit('legs')}
+                  >
+                    LEGS (QUADS/HAMSTRINGS)
+                  </button>
+                </div>
+              </div>
+
+              {yesterdayWarning && (
+                <div className="recovery-warning-banner" role="alert">
+                  <span className="warning-icon">⚡</span>
+                  <span>{yesterdayWarning}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Smart Synergistic Recommendations (Pull/Push/Legs Optimization) */}
+            {synergyAdvisory && (
+              <div className="synergy-recommendation-box" role="region">
+                <div className="synergy-header">
+                  <span className="synergy-tag">{synergyAdvisory.title}</span>
+                  <p className="synergy-message">{synergyAdvisory.message}</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn-synergy-apply"
+                  onClick={synergyAdvisory.onApply}
+                >
+                  {synergyAdvisory.actionLabel}
+                </button>
+              </div>
+            )}
+
             {/* Target Exercise Count Selector */}
             <div className="target-volume-selector">
               <div className="volume-label-col">
                 <span className="volume-title">TARGET EXERCISE COUNT</span>
-                <span className="volume-sub">Choose how many movements to generate for today's session:</span>
+                <span className="volume-sub">Choose how many movements to generate for today&apos;s session:</span>
               </div>
               <div className="volume-pill-group">
                 {EXERCISE_COUNT_OPTIONS.map((count) => (
@@ -805,10 +1028,10 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
               </div>
             </div>
 
-            {/* Quick Presets & Individual Muscle Chips */}
+            {/* Quick Presets, Random Split, & Individual Muscle Chips */}
             <div className="muscle-selection-dashboard">
               <div className="preset-row">
-                <span className="preset-label">QUICK PRESETS:</span>
+                <span className="preset-label">PRESETS:</span>
                 {PRESETS.map((p) => (
                   <button
                     key={p.name}
@@ -819,13 +1042,24 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
                     {p.name}
                   </button>
                 ))}
+
+                {/* Random Muscle Generator */}
+                <button
+                  type="button"
+                  className="preset-chip random-chip"
+                  onClick={handleRandomizeMuscles}
+                  title="Randomly generate a physiologically balanced split"
+                >
+                  🎲 RANDOM SPLIT
+                </button>
+
                 {selectedMuscles.length > 0 && (
                   <button
                     type="button"
                     className="preset-chip clear"
                     onClick={clearMuscles}
                   >
-                    CLEAR SELECTION
+                    CLEAR
                   </button>
                 )}
               </div>
@@ -833,15 +1067,22 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
               <div className="muscle-tags-row">
                 {MUSCLE_GROUPS.map((m) => {
                   const active = selectedMuscles.includes(m.id);
+                  const isConflictingYesterday =
+                    (yesterdaySplit === 'push' && PUSH_MUSCLES.includes(m.id)) ||
+                    (yesterdaySplit === 'pull' && PULL_MUSCLES.includes(m.id)) ||
+                    (yesterdaySplit === 'legs' && LEG_MUSCLES.includes(m.id));
+
                   return (
                     <button
                       key={m.id}
                       type="button"
-                      className={`muscle-tag ${active ? 'active' : ''}`}
+                      className={`muscle-tag ${active ? 'active' : ''} ${isConflictingYesterday ? 'recently-worked' : ''}`}
                       onClick={() => toggleMuscle(m.id)}
+                      title={isConflictingYesterday ? 'Trained yesterday (<24h ago)' : ''}
                     >
                       <span className="tag-code">{m.code}</span>
                       <span>{m.name}</span>
+                      {isConflictingYesterday && <span className="recovery-dot" title="Trained yesterday">⚡</span>}
                     </button>
                   );
                 })}
@@ -850,46 +1091,69 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
           </div>
         )}
 
-        {/* ================= STEP 3: EXERCISES MATRIX ================= */}
+        {/* ================= STEP 3: EXERCISES MATRIX (INITIALLY EMPTY) ================= */}
         {step === 3 && (
           <div className="wizard-step-content step-exercises">
             <div className="step-instruction-bar">
               <div>
                 <h2>CUSTOMIZE TRAINING MATRIX</h2>
                 <p>
-                  Calibrated <strong>{generatedExercises.length} movements</strong> for {targetExerciseCount} target exercises. Reorder, shuffle, or add movements before starting.
+                  {generatedExercises.length > 0
+                    ? `Generated ${generatedExercises.length} movements matching your target volume. Reorder, shuffle, or add movements.`
+                    : `Selection confirmed for ${selectedMuscles.length} muscle groups. Click Generate to build your session or add manually.`}
                 </p>
               </div>
-              <div className="matrix-top-actions">
-                <button
-                  type="button"
-                  className="btn-action-outline"
-                  onClick={generateWorkout}
-                  title="Re-generate all exercises"
-                >
-                  SHUFFLE ALL
-                </button>
-                <button
-                  type="button"
-                  className="btn-action-primary"
-                  onClick={() => setShowAddPicker(true)}
-                >
-                  + ADD EXERCISE
-                </button>
-              </div>
-            </div>
-
-            {/* Exercise List Cards */}
-            <div className="wizard-exercise-list">
-              {generatedExercises.length === 0 ? (
-                <div className="empty-exercise-state">
-                  <p>No matching exercises found for this combination. Please select more equipment or muscle groups.</p>
-                  <button type="button" className="btn-secondary" onClick={() => setStep(1)}>
-                    ← BACK TO EQUIPMENT
+              {generatedExercises.length > 0 && (
+                <div className="matrix-top-actions">
+                  <button
+                    type="button"
+                    className="btn-action-outline"
+                    onClick={generateWorkout}
+                    title="Re-generate all exercises"
+                  >
+                    SHUFFLE ALL
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-action-primary"
+                    onClick={() => setShowAddPicker(true)}
+                  >
+                    + ADD MOVEMENT
                   </button>
                 </div>
-              ) : (
-                generatedExercises.map((exercise, idx) => {
+              )}
+            </div>
+
+            {/* If not generated yet: Clean Initial State (No auto-pick!) */}
+            {generatedExercises.length === 0 ? (
+              <div className="empty-exercise-generator-state">
+                <div className="generator-ready-badge">MATRIX READY TO CALIBRATE</div>
+                <h3>{targetExerciseCount} MOVEMENTS TARGET</h3>
+                <p>
+                  Target focus: <strong>{selectedMuscles.map((m) => MUSCLE_GROUPS.find((mg) => mg.id === m)?.name || m).join(', ')}</strong>.
+                  <br />
+                  Click below to generate calibrated movements matching your available equipment, or pick movements manually.
+                </p>
+                <div className="generator-cta-row">
+                  <button
+                    type="button"
+                    className="btn-generate-main red-action"
+                    onClick={generateWorkout}
+                  >
+                    ⚡ GENERATE {targetExerciseCount} MOVEMENTS NOW
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-add-manual-main"
+                    onClick={() => setShowAddPicker(true)}
+                  >
+                    + SELECT MOVEMENTS MANUALLY
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="wizard-exercise-list">
+                {generatedExercises.map((exercise, idx) => {
                   const media = exerciseMediaUrl(exercise);
                   const badgeLetter = (exercise.target || exercise.body_part || 'E').slice(0, 3).toUpperCase();
 
@@ -958,11 +1222,9 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
                       </div>
                     </div>
                   );
-                })
-              )}
+                })}
 
-              {/* Add Button at bottom */}
-              {generatedExercises.length > 0 && (
+                {/* Add Button at bottom of generated list */}
                 <div className="add-row-container">
                   <button
                     type="button"
@@ -972,12 +1234,12 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
                     + ADD ANOTHER MOVEMENT
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Modal Bottom Footer Navigation */}
+        {/* Modal Bottom Navigation Bar */}
         <footer className="wizard-modal-footer">
           <button
             type="button"

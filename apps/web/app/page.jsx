@@ -1363,18 +1363,27 @@ export default function Home() {
       <div
         className="storage-strip"
         role="status"
-        aria-label="FITFLOW workout history status"
+        aria-label="FITFLOW operational telemetry"
       >
-        <span>LOCAL-FIRST STORAGE</span>
-        <b>{savedProfile ? "PROFILE SAVED" : "PROFILE READY"}</b>
-        <b>{savedPlan ? "PLAN SAVED" : "PLAN NOT SAVED"}</b>
-        <b>{historyStats.today} TODAY</b>
-        <b>{historyStats.week} THIS WEEK</b>
-        <b>{historyStats.total} HISTORY</b>
+        <span className="ticker-badge">● PROTOCOL / LOCAL-FIRST</span>
+        <span className="ticker-item">
+          PROFILE: <b>{savedProfile ? "READY" : "SETUP NEEDED"}</b>
+        </span>
+        <span className="ticker-item">
+          PLAN: <b>{savedPlan ? "ACTIVE" : "7-DAY STARTER"}</b>
+        </span>
+        <span className="ticker-telemetry">
+          {historyStats.today > 0 ? (
+            <b className="ticker-highlight">{historyStats.today} COMPLETED TODAY</b>
+          ) : (
+            "TODAY: READY TO TRAIN"
+          )}{" "}
+          · {historyStats.week} THIS WEEK · {historyStats.total} TOTAL SESSIONS
+        </span>
       </div>
       <header className="site-header">
         <a className="wordmark" href="#top" aria-label="FITFLOW home">
-          <span className="mark">F</span> FITFLOW
+          <span className="mark">F</span> FITFLOW <span className="os-tag">// OS</span>
         </a>
         <nav
           className={`main-nav ${mobileNavOpen ? "is-open" : ""}`}
@@ -1395,7 +1404,7 @@ export default function Home() {
           </a>
           <a href="/nutrition">NUTRITION</a>
           <a href="#custom-plan" onClick={() => setMobileNavOpen(false)}>
-            TRAINING GUIDE
+            GUIDE
           </a>
         </nav>
         {currentUser ? (
@@ -1463,9 +1472,18 @@ export default function Home() {
               Simple training plans, clear exercise guidance, and no pressure to
               be anyone but yourself.
             </p>
-            <a href="#library" className="text-link">
-              EXPLORE THE LIBRARY <span>→</span>
-            </a>
+            <div className="hero-action-group">
+              <button
+                type="button"
+                className="red-action hero-start-btn"
+                onClick={() => startWorkout()}
+              >
+                START WORKOUT <span>→</span>
+              </button>
+              <a href="#library" className="text-link">
+                EXPLORE LIBRARY <span>→</span>
+              </a>
+            </div>
           </div>
         </div>
         <div className="hero-stack">

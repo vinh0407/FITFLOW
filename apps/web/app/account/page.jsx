@@ -58,7 +58,12 @@ export default function AccountPage() {
   if (checking) return <main className="auth-shell"><div className="auth-loading">CHECKING SESSION...</div></main>;
 
   return <main className="auth-shell">
-    <header className="auth-header"><a className="wordmark" href="/" aria-label="FITFLOW home"><span className="mark">F</span> FITFLOW</a><button className="auth-signout" onClick={() => setLogoutConfirmOpen(true)}>LOG OUT</button></header>
+    <header className="auth-header">
+      <a className="wordmark" href="/" aria-label="FITFLOW home">
+        <span className="mark">F</span> FITFLOW <span className="os-tag">// OS</span>
+      </a>
+      <button className="auth-signout" onClick={() => setLogoutConfirmOpen(true)}>LOG OUT</button>
+    </header>
     <section className="account-layout">
       <div className="account-intro"><span className="footer-label">PERSONAL PROFILE</span><h1>YOUR<br /><em>STARTING LINE.</em></h1><p>Keep the numbers that shape your training in one place. FITFLOW uses them to guide your plan; it does not diagnose or replace professional health advice.</p><div className="account-links"><a href="/#plans">VIEW MY PLAN →</a><a href="/#workouts">START WORKOUT →</a><a href="/nutrition">OPEN NUTRITION →</a></div></div>
       <form className="account-panel account-form" onSubmit={save}>

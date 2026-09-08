@@ -198,7 +198,7 @@ export default function NutritionPage() {
       </a>
       <header className="subpage-header">
         <a className="wordmark" href="/">
-          <span className="mark">F</span> FITFLOW
+          <span className="mark">F</span> FITFLOW <span className="os-tag">// OS</span>
         </a>
         <a className="back-link" href="/">
           ← BACK TO HOME
