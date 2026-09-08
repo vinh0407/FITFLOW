@@ -457,8 +457,9 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
         return;
       }
       setValidationNotice('');
-      // Do NOT auto-pick exercises! Go to step 3 clean so user can generate or pick.
       setStep(3);
+      // Auto-generate exercises when entering step 3
+      setTimeout(() => generateWorkout(), 0);
     }
   };
 
@@ -1098,13 +1099,10 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
               <div>
                 <h2>CUSTOMIZE TRAINING MATRIX</h2>
                 <p>
-                  {generatedExercises.length > 0
-                    ? `Generated ${generatedExercises.length} movements matching your target volume. Reorder, shuffle, or add movements.`
-                    : `Selection confirmed for ${selectedMuscles.length} muscle groups. Click Generate to build your session or add manually.`}
+                  {`Generated ${generatedExercises.length} movements matching your target volume. Reorder, shuffle, or add movements.`}
                 </p>
               </div>
-              {generatedExercises.length > 0 && (
-                <div className="matrix-top-actions">
+              <div className="matrix-top-actions">
                   <button
                     type="button"
                     className="btn-action-outline"
@@ -1121,38 +1119,9 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
                     + ADD MOVEMENT
                   </button>
                 </div>
-              )}
             </div>
 
-            {/* If not generated yet: Clean Initial State (No auto-pick!) */}
-            {generatedExercises.length === 0 ? (
-              <div className="empty-exercise-generator-state">
-                <div className="generator-ready-badge">MATRIX READY TO CALIBRATE</div>
-                <h3>{targetExerciseCount} MOVEMENTS TARGET</h3>
-                <p>
-                  Target focus: <strong>{selectedMuscles.map((m) => MUSCLE_GROUPS.find((mg) => mg.id === m)?.name || m).join(', ')}</strong>.
-                  <br />
-                  Click below to generate calibrated movements matching your available equipment, or pick movements manually.
-                </p>
-                <div className="generator-cta-row">
-                  <button
-                    type="button"
-                    className="btn-generate-main red-action"
-                    onClick={generateWorkout}
-                  >
-                    ⚡ GENERATE {targetExerciseCount} MOVEMENTS NOW
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-add-manual-main"
-                    onClick={() => setShowAddPicker(true)}
-                  >
-                    + SELECT MOVEMENTS MANUALLY
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="wizard-exercise-list">
+            <div className="wizard-exercise-list">
                 {generatedExercises.map((exercise, idx) => {
                   const media = exerciseMediaUrl(exercise);
                   const badgeLetter = (exercise.target || exercise.body_part || 'E').slice(0, 3).toUpperCase();
@@ -1235,7 +1204,6 @@ export default function WorkoutWizardModal({ isOpen, onClose, onStartWorkout }) 
                   </button>
                 </div>
               </div>
-            )}
           </div>
         )}
 

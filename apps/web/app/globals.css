@@ -362,8 +362,8 @@ input {
 .donate-button {
   border: 0;
   padding: 12px 22px;
-  background: var(--gray-500);
-  color: var(--white);
+  background: #ef4444;
+  color: #fff;
   cursor: pointer;
 }
 .donate-button span {
@@ -727,8 +727,12 @@ input {
   max-width: 270px;
 }
 .closing-action p {
-  font-size: 18px;
-  line-height: 1.35;
+  font:
+    13px/1.5 "Arial Narrow",
+    Arial,
+    sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--muted);
 }
 .red-action {
   border: 0;
@@ -1598,9 +1602,9 @@ input {
   }
 }
 .donate-button {
-  background: transparent !important;
-  border: 1px solid var(--line) !important;
-  color: var(--ink) !important;
+  background: #ef4444 !important;
+  border: 1px solid #ef4444 !important;
+  color: #fff !important;
   font-weight: 700;
   letter-spacing: 0.08em;
   display: inline-block;
@@ -1609,9 +1613,9 @@ input {
 }
 .donate-button:hover,
 .donate-button:focus-visible {
-  background: var(--ink) !important;
-  border-color: var(--ink) !important;
-  color: var(--paper) !important;
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+  color: #fff !important;
 }
 .loading-label,
 .empty-catalog {
@@ -2499,8 +2503,8 @@ input {
 }
 .donate-button:hover,
 .donate-button:focus-visible {
-  background: var(--ink) !important;
-  color: var(--white);
+  background: #dc2626 !important;
+  color: #fff;
 }
 .poster-red:hover small,
 .poster-red:focus-visible small {
@@ -2517,9 +2521,7 @@ input {
 .red-action:hover,
 .red-action:focus-visible,
 .complete-set:hover,
-.complete-set:focus-visible,
-.donate-button:hover,
-.donate-button:focus-visible {
+.complete-set:focus-visible {
   background: var(--gray-500) !important;
   color: var(--white);
 }
@@ -2733,8 +2735,6 @@ html[data-theme="dark"] .menu-item small {
 
 html[data-theme="dark"] .clear-filter,
 html[data-theme="dark"] .day-toolbar button,
-html[data-theme="dark"] .donate-button:hover,
-html[data-theme="dark"] .donate-button:focus-visible,
 html[data-theme="dark"] .poster-red:hover,
 html[data-theme="dark"] .poster-red:focus-visible,
 html[data-theme="dark"] .poster-ink:hover,
@@ -2744,8 +2744,7 @@ html[data-theme="dark"] .poster-ink:focus-visible {
   color: var(--ink) !important;
 }
 html[data-theme="dark"] .clear-filter:hover,
-html[data-theme="dark"] .day-toolbar button:hover:not(:disabled),
-html[data-theme="dark"] .donate-button:hover {
+html[data-theme="dark"] .day-toolbar button:hover:not(:disabled) {
   background: var(--muted) !important;
   border-color: var(--gray-500) !important;
   color: var(--white) !important;
@@ -7798,6 +7797,393 @@ html[data-theme="dark"] .calculator-card code {
   font-size: 0.78rem;
   line-height: 1.5;
   color: #a1a1aa;
+}
+
+/* ====================================================================
+   WORKOUT WIZARD — LIGHT THEME OVERRIDES
+   When the page is NOT in dark mode, remap all hardcoded dark colors
+   to a clean light palette matching the site's --paper / --ink tokens.
+   ==================================================================== */
+:root:not([data-theme="dark"]) .workout-wizard-modal {
+  background: #f4f4f2;
+  color: #151515;
+  border-color: #d4d4d0;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.15);
+}
+:root:not([data-theme="dark"]) .wizard-modal-header {
+  background: #eaeae8;
+  border-bottom-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .wizard-telemetry { color: #333; }
+:root:not([data-theme="dark"]) .wizard-close-btn {
+  border-color: #d4d4d0;
+  color: #666;
+}
+:root:not([data-theme="dark"]) .wizard-close-btn:hover {
+  color: #151515;
+  border-color: #aaa;
+  background: #e0e0de;
+}
+:root:not([data-theme="dark"]) .wizard-stepper {
+  background: #eaeae8;
+  border-bottom-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .step-circle {
+  background: #e0e0de;
+  color: #888;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .step-node.completed .step-circle {
+  background: #d4d4d0;
+  color: #333;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .step-title { color: #666; }
+:root:not([data-theme="dark"]) .step-node.active .step-title { color: #151515; }
+:root:not([data-theme="dark"]) .step-node.completed .step-title { color: #333; }
+:root:not([data-theme="dark"]) .step-desc { color: #888; }
+:root:not([data-theme="dark"]) .step-connector { background: #d4d4d0; }
+:root:not([data-theme="dark"]) .step-connector.completed { background: #bbb; }
+
+:root:not([data-theme="dark"]) .step-instruction-bar h2 { color: #151515; }
+:root:not([data-theme="dark"]) .step-instruction-bar p { color: #666; }
+:root:not([data-theme="dark"]) .step-instruction-bar .instruction-subtitle { color: #888; }
+
+/* Buttons */
+:root:not([data-theme="dark"]) .btn-text-action {
+  background: #e9e9e7;
+  border-color: #d4d4d0;
+  color: #666;
+}
+:root:not([data-theme="dark"]) .btn-text-action:hover {
+  color: #151515;
+  border-color: #aaa;
+  background: #d4d4d0;
+}
+
+/* Equipment Cards */
+:root:not([data-theme="dark"]) .equipment-card {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .equipment-card:hover {
+  border-color: #bbb;
+  background: #f4f4f2;
+}
+:root:not([data-theme="dark"]) .equipment-card.selected {
+  background: #fff0f0;
+}
+:root:not([data-theme="dark"]) .card-code-tag { color: #888; }
+:root:not([data-theme="dark"]) .indicator-dot {
+  background: #d4d4d0;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .card-wireframe-wrap { color: #999; }
+:root:not([data-theme="dark"]) .equipment-card:hover .card-wireframe-wrap { color: #555; }
+:root:not([data-theme="dark"]) .equipment-card.selected .card-wireframe-wrap { color: #151515; }
+:root:not([data-theme="dark"]) .equipment-card .card-title { color: #151515; }
+:root:not([data-theme="dark"]) .equipment-card .card-sub { color: #888; }
+
+/* Muscle Status */
+:root:not([data-theme="dark"]) .muscle-status-box {
+  background: #fff;
+  border-color: #d4d4d0;
+  color: #666;
+}
+
+/* Alert / Validation */
+:root:not([data-theme="dark"]) .wizard-alert-bar {
+  background: rgba(220, 38, 38, 0.08);
+  color: #991b1b;
+}
+:root:not([data-theme="dark"]) .wizard-random-banner {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #151515;
+}
+
+/* Yesterday Advisory */
+:root:not([data-theme="dark"]) .yesterday-advisory-container {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .yesterday-label { color: #888; }
+:root:not([data-theme="dark"]) .yesterday-chip {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #666;
+}
+:root:not([data-theme="dark"]) .yesterday-chip:hover {
+  background: #d4d4d0;
+  color: #151515;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .yesterday-chip.active {
+  background: #fff0f0;
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+/* Recovery Warning */
+:root:not([data-theme="dark"]) .recovery-warning-banner {
+  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #991b1b;
+}
+
+/* Synergy */
+:root:not([data-theme="dark"]) .synergy-recommendation-box {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .synergy-message { color: #555; }
+:root:not([data-theme="dark"]) .btn-synergy-apply {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #151515;
+}
+
+/* Volume Selector */
+:root:not([data-theme="dark"]) .target-volume-selector {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .volume-title { color: #151515; }
+:root:not([data-theme="dark"]) .volume-sub { color: #888; }
+:root:not([data-theme="dark"]) .volume-pill {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #666;
+}
+:root:not([data-theme="dark"]) .volume-pill:hover {
+  color: #151515;
+  border-color: #bbb;
+  background: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .volume-pill.active {
+  background: #fff0f0;
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+/* Anatomy Panels */
+:root:not([data-theme="dark"]) .anatomy-figure-panel {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .figure-header { color: #888; }
+:root:not([data-theme="dark"]) .anatomy-svg { filter: none; }
+:root:not([data-theme="dark"]) .body-silhouette {
+  fill: #e0e0de;
+  stroke: #c9c9c7;
+}
+:root:not([data-theme="dark"]) .muscle-part path,
+:root:not([data-theme="dark"]) .muscle-part rect,
+:root:not([data-theme="dark"]) .muscle-part circle {
+  fill: #d4d4d0;
+  stroke: #bbb;
+}
+:root:not([data-theme="dark"]) .muscle-part:hover path,
+:root:not([data-theme="dark"]) .muscle-part:hover rect,
+:root:not([data-theme="dark"]) .muscle-part:hover circle {
+  fill: #c0c0bc;
+  stroke: #999;
+}
+
+/* Muscle Dashboard */
+:root:not([data-theme="dark"]) .muscle-selection-dashboard {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .preset-label { color: #888; }
+:root:not([data-theme="dark"]) .preset-chip {
+  background: #eaeae8;
+  color: #555;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .preset-chip:hover {
+  background: #d4d4d0;
+  color: #151515;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .preset-chip.clear { color: #dc2626; border-color: #f87171; }
+:root:not([data-theme="dark"]) .preset-chip.clear:hover { background: #dc2626; color: #fff; }
+:root:not([data-theme="dark"]) .preset-chip.random-chip {
+  background: #eaeae8;
+  border-color: #bbb;
+  color: #151515;
+}
+:root:not([data-theme="dark"]) .preset-chip.random-chip:hover {
+  background: #d4d4d0;
+  border-color: #ef4444;
+}
+
+/* Muscle Tags */
+:root:not([data-theme="dark"]) .muscle-tag {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #666;
+}
+:root:not([data-theme="dark"]) .muscle-tag:hover {
+  border-color: #bbb;
+  color: #151515;
+}
+:root:not([data-theme="dark"]) .muscle-tag .tag-code {
+  color: #888;
+  background: #f4f4f2;
+}
+:root:not([data-theme="dark"]) .muscle-tag.active {
+  background: #fff0f0;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+:root:not([data-theme="dark"]) .muscle-tag.active .tag-code {
+  color: #ef4444;
+  background: #fff;
+}
+
+/* Exercise Cards */
+:root:not([data-theme="dark"]) .wizard-exercise-card {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .wizard-exercise-card:hover {
+  border-color: #bbb;
+  background: #f4f4f2;
+}
+:root:not([data-theme="dark"]) .card-index-indicator { color: #999; }
+:root:not([data-theme="dark"]) .card-thumbnail {
+  background: #f4f4f2;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .placeholder-thumb { color: #999; }
+:root:not([data-theme="dark"]) .card-badge {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #333;
+}
+:root:not([data-theme="dark"]) .exercise-name { color: #151515; }
+:root:not([data-theme="dark"]) .exercise-meta { color: #888; }
+
+/* Action Buttons */
+:root:not([data-theme="dark"]) .btn-action-outline {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #666;
+}
+:root:not([data-theme="dark"]) .btn-action-outline:hover {
+  background: #d4d4d0;
+  color: #151515;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .btn-action-primary {
+  background: #d4d4d0;
+  border-color: #bbb;
+  color: #151515;
+}
+:root:not([data-theme="dark"]) .btn-action-primary:hover {
+  background: #bbb;
+  color: #151515;
+}
+:root:not([data-theme="dark"]) .btn-action-shuffle {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #555;
+}
+:root:not([data-theme="dark"]) .btn-action-shuffle:hover {
+  background: #d4d4d0;
+  color: #151515;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .btn-action-icon {
+  border-color: #d4d4d0;
+  color: #888;
+}
+:root:not([data-theme="dark"]) .btn-action-icon:hover {
+  color: #151515;
+  border-color: #aaa;
+  background: #eaeae8;
+}
+
+/* Add Row */
+:root:not([data-theme="dark"]) .btn-add-more-row {
+  border-color: #d4d4d0;
+  color: #888;
+}
+:root:not([data-theme="dark"]) .btn-add-more-row:hover {
+  border-color: #aaa;
+  color: #151515;
+  background: #eaeae8;
+}
+
+/* Footer */
+:root:not([data-theme="dark"]) .wizard-modal-footer {
+  background: #eaeae8;
+  border-top-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .btn-wizard-nav.prev {
+  border-color: #d4d4d0;
+  color: #666;
+}
+:root:not([data-theme="dark"]) .btn-wizard-nav.prev:hover:not(:disabled) {
+  border-color: #aaa;
+  color: #151515;
+  background: #d4d4d0;
+}
+
+/* Picker / Detail Dialog */
+:root:not([data-theme="dark"]) .picker-overlay {
+  background: rgba(0, 0, 0, 0.35);
+}
+:root:not([data-theme="dark"]) .picker-modal {
+  background: #f4f4f2;
+  border-color: #d4d4d0;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+}
+:root:not([data-theme="dark"]) .picker-header {
+  border-bottom-color: #d4d4d0;
+  background: #eaeae8;
+}
+:root:not([data-theme="dark"]) .picker-header h3 { color: #151515; }
+:root:not([data-theme="dark"]) .picker-header button { color: #888; }
+:root:not([data-theme="dark"]) .picker-header button:hover { color: #151515; }
+:root:not([data-theme="dark"]) .picker-search { border-bottom-color: #d4d4d0; }
+:root:not([data-theme="dark"]) .picker-search input {
+  background: #fff;
+  border-color: #d4d4d0;
+  color: #151515;
+}
+:root:not([data-theme="dark"]) .picker-item {
+  background: #fff;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .picker-item:hover {
+  background: #eaeae8;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .picker-item-info strong { color: #151515; }
+:root:not([data-theme="dark"]) .picker-item-info span { color: #888; }
+:root:not([data-theme="dark"]) .btn-picker-add {
+  background: #d4d4d0;
+  color: #151515;
+  border-color: #bbb;
+}
+:root:not([data-theme="dark"]) .btn-picker-add:hover {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+/* Detail Modal */
+:root:not([data-theme="dark"]) .detail-media {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+}
+:root:not([data-theme="dark"]) .detail-meta p { color: #555; }
+:root:not([data-theme="dark"]) .instructions-box {
+  background: #eaeae8;
+  border-color: #d4d4d0;
+  color: #555;
 }
 
 @media (max-width: 768px) {

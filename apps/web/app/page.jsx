@@ -1734,11 +1734,6 @@ export default function Home() {
           </h2>
         </div>
         <div className="closing-action">
-          <p>
-            {todayWorkoutMinutes} minutes total: 5 movements ×{" "}
-            {todayWorkoutExerciseMinutes} minutes, including 4 body-part
-            movements and 1 cardio movement.
-          </p>
           <button className="red-action" onClick={() => startWorkout()}>
             LET&apos;S START <span>→</span>
           </button>
