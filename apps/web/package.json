@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@fitflow/contracts": "*",
+    "firebase": "^12.18.0",
     "next": "^16.3.3",
     "react": "19.1.0",
     "react-dom": "19.1.0"
