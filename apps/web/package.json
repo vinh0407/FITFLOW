@@ -6,7 +6,9 @@
     "dev": "next dev",
     "prebuild": "node scripts/sync-shared-data.mjs",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node --test test/*.test.mjs",
+    "test:ui": "node scripts/verify-ui.mjs"
   },
   "dependencies": {
     "@fitflow/contracts": "*",

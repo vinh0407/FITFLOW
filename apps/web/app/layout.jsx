@@ -1,9 +1,19 @@
 import './globals.css';
+import { getImageProps } from 'next/image';
+import favicon from '../public/favicon-f.png';
+
+const { props: faviconProps } = getImageProps({ src: favicon, width: 32, height: 32, alt: 'FITFLOW' });
 
 export const metadata = {
   title: 'FITFLOW / Training Operating System',
   description: 'Train with intent.',
-  icons: { icon: '/favicon-f.png' }
+  icons: { icon: faviconProps.src }
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover'
 };
 
 export default function RootLayout({ children }) {

@@ -16,3 +16,11 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Dart / Flutter tool artifacts
+.dart_tool/
+.flutter-plugins*
+.pub-cache/
+.pub/
+
+# Impeccable / Assistant artifacts
+.impeccable/

@@ -7,6 +7,9 @@
     ".": "./src/index.js",
     "./nutrition": "./src/nutrition.js",
     "./bmi": "./src/bmi.js",
+    "./profile": "./src/profile.js",
+    "./workout": "./src/workout.js",
+    "./storage": "./src/storage.js",
     "./data/*": "./data/*"
   }
 }

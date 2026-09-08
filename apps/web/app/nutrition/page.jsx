@@ -1,40 +1,385 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { STORAGE_KEYS, readStorage, writeStorage } from '../../lib/storage';
-import { NUTRITION_GROUPS } from '@fitflow/contracts/nutrition';
-import { useScrollReveal } from '../../lib/scroll-reveal';
+import { useEffect, useMemo, useState } from "react";
+import {
+  STORAGE_KEYS,
+  readStorage,
+  readUserStorage,
+  writeUserStorage,
+} from "../../lib/storage";
+import { NUTRITION_GROUPS } from "@fitflow/contracts/nutrition";
+import { useScrollReveal } from "../../lib/scroll-reveal";
 
-const categoryLabels = { ALL: 'ALL FOODS', PROTEIN: 'PROTEIN', CARBS: 'CARBS', GREENS: 'GREENS', PLANT: 'PLANT-BASED' };
+const categoryLabels = {
+  ALL: "ALL FOODS",
+  PROTEIN: "PROTEIN",
+  CARBS: "CARBS",
+  GREENS: "GREENS",
+  PLANT: "PLANT-BASED",
+};
 const foodNames = {
-  'Ức gà': 'Chicken Breast', 'Thịt bò nạc': 'Lean Beef', 'Cá hồi': 'Salmon', 'Cá ngừ': 'Tuna', 'Tôm': 'Shrimp', 'Trứng gà': 'Eggs', 'Lòng trắng trứng': 'Egg Whites', 'Sữa chua Hy Lạp': 'Greek Yogurt', 'Thịt heo thăn': 'Pork Tenderloin', 'Cá rô phi': 'Tilapia', 'Thịt gà tây': 'Turkey', 'Cá tuyết': 'Cod', 'Phô mai Cottage': 'Cottage Cheese', 'Thịt bò thăn': 'Beef Tenderloin', 'Mực': 'Squid',
-  'Gạo lứt': 'Brown Rice', 'Gạo trắng': 'White Rice', 'Yến mạch': 'Oats', 'Khoai lang': 'Sweet Potato', 'Khoai tây': 'Potato', 'Chuối': 'Banana', 'Táo': 'Apple', 'Bánh mì nguyên cám': 'Whole Wheat Bread', 'Quinoa': 'Quinoa', 'Ngô': 'Corn', 'Đậu lăng': 'Lentils', 'Đậu đen': 'Black Beans', 'Mì nguyên cám': 'Whole Wheat Pasta', 'Bí đỏ': 'Pumpkin', 'Dâu tây': 'Strawberries',
-  'Bông cải xanh': 'Broccoli', 'Rau bina': 'Spinach', 'Cải xoăn': 'Kale', 'Xà lách': 'Lettuce', 'Dưa leo': 'Cucumber', 'Cà chua': 'Tomato', 'Cà rốt': 'Carrot', 'Ớt chuông': 'Bell Pepper', 'Măng tây': 'Asparagus', 'Bắp cải': 'Cabbage', 'Đậu que': 'Green Beans', 'Bí xanh': 'Zucchini', 'Cải thìa': 'Bok Choy', 'Nấm': 'Mushrooms', 'Rau muống': 'Water Spinach',
-  'Đậu phụ': 'Tofu', 'Hạnh nhân': 'Almonds', 'Óc chó': 'Walnuts', 'Hạt điều': 'Cashews', 'Đậu nành': 'Soybeans', 'Edamame': 'Edamame', 'Hạt chia': 'Chia Seeds', 'Hạt lanh': 'Flax Seeds', 'Hạt bí': 'Pumpkin Seeds', 'Đậu phộng': 'Peanuts', 'Bơ đậu phộng': 'Peanut Butter', 'Tempeh': 'Tempeh', 'Đậu xanh': 'Mung Beans', 'Đậu gà': 'Chickpeas', 'Đậu đỏ': 'Kidney Beans',
+  "Ức gà": "Chicken Breast",
+  "Thịt bò nạc": "Lean Beef",
+  "Cá hồi": "Salmon",
+  "Cá ngừ": "Tuna",
+  Tôm: "Shrimp",
+  "Trứng gà": "Eggs",
+  "Lòng trắng trứng": "Egg Whites",
+  "Sữa chua Hy Lạp": "Greek Yogurt",
+  "Thịt heo thăn": "Pork Tenderloin",
+  "Cá rô phi": "Tilapia",
+  "Thịt gà tây": "Turkey",
+  "Cá tuyết": "Cod",
+  "Phô mai Cottage": "Cottage Cheese",
+  "Thịt bò thăn": "Beef Tenderloin",
+  Mực: "Squid",
+  "Gạo lứt": "Brown Rice",
+  "Gạo trắng": "White Rice",
+  "Yến mạch": "Oats",
+  "Khoai lang": "Sweet Potato",
+  "Khoai tây": "Potato",
+  Chuối: "Banana",
+  Táo: "Apple",
+  "Bánh mì nguyên cám": "Whole Wheat Bread",
+  Quinoa: "Quinoa",
+  Ngô: "Corn",
+  "Đậu lăng": "Lentils",
+  "Đậu đen": "Black Beans",
+  "Mì nguyên cám": "Whole Wheat Pasta",
+  "Bí đỏ": "Pumpkin",
+  "Dâu tây": "Strawberries",
+  "Bông cải xanh": "Broccoli",
+  "Rau bina": "Spinach",
+  "Cải xoăn": "Kale",
+  "Xà lách": "Lettuce",
+  "Dưa leo": "Cucumber",
+  "Cà chua": "Tomato",
+  "Cà rốt": "Carrot",
+  "Ớt chuông": "Bell Pepper",
+  "Măng tây": "Asparagus",
+  "Bắp cải": "Cabbage",
+  "Đậu que": "Green Beans",
+  "Bí xanh": "Zucchini",
+  "Cải thìa": "Bok Choy",
+  Nấm: "Mushrooms",
+  "Rau muống": "Water Spinach",
+  "Đậu phụ": "Tofu",
+  "Hạnh nhân": "Almonds",
+  "Óc chó": "Walnuts",
+  "Hạt điều": "Cashews",
+  "Đậu nành": "Soybeans",
+  Edamame: "Edamame",
+  "Hạt chia": "Chia Seeds",
+  "Hạt lanh": "Flax Seeds",
+  "Hạt bí": "Pumpkin Seeds",
+  "Đậu phộng": "Peanuts",
+  "Bơ đậu phộng": "Peanut Butter",
+  Tempeh: "Tempeh",
+  "Đậu xanh": "Mung Beans",
+  "Đậu gà": "Chickpeas",
+  "Đậu đỏ": "Kidney Beans",
 };
 
-const foods = Object.entries(NUTRITION_GROUPS).flatMap(([type, items]) => items.map(([name, kcal, protein, carbs, fat], index) => [type, name, kcal, protein, carbs, fat, `/food/items/${type.toLowerCase()}-${index + 1}.png`]));
+const foods = Object.entries(NUTRITION_GROUPS).flatMap(([type, items]) =>
+  items.map(([name, kcal, protein, carbs, fat], index) => [
+    type,
+    name,
+    kcal,
+    protein,
+    carbs,
+    fat,
+    `/food/items/${type.toLowerCase()}-${index + 1}.png`,
+  ]),
+);
 
 const randomFrom = (items) => items[Math.floor(Math.random() * items.length)];
 const menuTemplate = [
-  { meal: 'BREAKFAST', items: [{ type: 'PROTEIN', grams: 200 }, { type: 'CARBS', grams: 60 }, { type: 'CARBS', grams: 120 }] },
-  { meal: 'LUNCH', items: [{ type: 'PROTEIN', grams: 180 }, { type: 'CARBS', grams: 180 }, { type: 'GREENS', grams: 150 }] },
-  { meal: 'SNACK', items: [{ type: 'PROTEIN', grams: 100 }, { type: 'PLANT', grams: 20 }] },
-  { meal: 'DINNER', items: [{ type: 'PROTEIN', grams: 160 }, { type: 'CARBS', grams: 220 }, { type: 'GREENS', grams: 150 }] },
+  {
+    meal: "BREAKFAST",
+    items: [
+      { type: "PROTEIN", grams: 200 },
+      { type: "CARBS", grams: 60 },
+      { type: "CARBS", grams: 120 },
+    ],
+  },
+  {
+    meal: "LUNCH",
+    items: [
+      { type: "PROTEIN", grams: 180 },
+      { type: "CARBS", grams: 180 },
+      { type: "GREENS", grams: 150 },
+    ],
+  },
+  {
+    meal: "SNACK",
+    items: [
+      { type: "PROTEIN", grams: 100 },
+      { type: "PLANT", grams: 20 },
+    ],
+  },
+  {
+    meal: "DINNER",
+    items: [
+      { type: "PROTEIN", grams: 160 },
+      { type: "CARBS", grams: 220 },
+      { type: "GREENS", grams: 150 },
+    ],
+  },
 ];
 
-const buildRandomMenu = () => menuTemplate.map((meal) => ({ ...meal, items: meal.items.map(({ type, grams }) => { const [name, kcal, protein = 0, carbs = 0, fat = 0] = randomFrom(NUTRITION_GROUPS[type]); return { name, type, grams, kcal: Math.round(kcal * grams / 100), protein: Math.round(protein * grams / 100), carbs: Math.round(carbs * grams / 100), fat: Math.round(fat * grams / 100) }; }) }));
+const buildRandomMenu = () =>
+  menuTemplate.map((meal) => ({
+    ...meal,
+    items: meal.items.map(({ type, grams }) => {
+      const [name, kcal, protein = 0, carbs = 0, fat = 0] = randomFrom(
+        NUTRITION_GROUPS[type],
+      );
+      return {
+        name,
+        type,
+        grams,
+        kcal: Math.round((kcal * grams) / 100),
+        protein: Math.round((protein * grams) / 100),
+        carbs: Math.round((carbs * grams) / 100),
+        fat: Math.round((fat * grams) / 100),
+      };
+    }),
+  }));
 
 export default function NutritionPage() {
-  useScrollReveal('.subpage-shell');
-  const [category, setCategory] = useState('ALL');
-  const [menu, setMenu] = useState(() => buildRandomMenu());
-  const [favoriteFoodIds, setFavoriteFoodIds] = useState(() => { const value = readStorage(STORAGE_KEYS.favorites, []); return Array.isArray(value) ? value : []; });
-  useEffect(() => { document.documentElement.dataset.theme = readStorage(STORAGE_KEYS.theme, 'light') === 'dark' ? 'dark' : 'light'; }, []);
-  const toggleFavorite = (name) => { setFavoriteFoodIds((current) => { const next = current.includes(name) ? current.filter((item) => item !== name) : [...current, name]; writeStorage(STORAGE_KEYS.favorites, next); return next; }); };
-  const categories = ['ALL', 'PROTEIN', 'CARBS', 'GREENS', 'PLANT'];
-  const visibleFoods = useMemo(() => category === 'ALL' ? foods : foods.filter((food) => food[0] === category), [category]);
-  useEffect(() => { document.querySelectorAll('.food-card').forEach((card) => { const name = card.querySelector('h2')?.textContent; const source = foods.find((food) => (foodNames[food[1]] || food[1]) === name); if (!source) return; let button = card.querySelector('.food-favorite'); if (!button) { button = document.createElement('button'); button.className = 'food-favorite'; button.type = 'button'; card.querySelector('.food-card-info')?.prepend(button); } const saved = favoriteFoodIds.includes(source[1]); button.textContent = saved ? '★ SAVED FOOD' : '☆ SAVE FOOD'; button.setAttribute('aria-pressed', String(saved)); button.setAttribute('aria-label', `${saved ? 'Remove' : 'Save'} ${name} ${saved ? 'from' : 'to'} favorite foods`); button.onclick = () => toggleFavorite(source[1]); }); }, [visibleFoods, favoriteFoodIds]);
-  const totals = menu.flatMap((meal) => meal.items).reduce((sum, item) => ({ grams: sum.grams + item.grams, kcal: sum.kcal + item.kcal, protein: sum.protein + item.protein, carbs: sum.carbs + item.carbs, fat: sum.fat + item.fat }), { grams: 0, kcal: 0, protein: 0, carbs: 0, fat: 0 });
-  return <main className="subpage-shell"><header className="subpage-header"><a className="wordmark" href="/"><span className="mark">F</span> FITFLOW</a><a className="back-link" href="/">← BACK TO HOME</a></header><section className="food-hero"><div><span className="footer-label">04 / NUTRITION MODE</span><h1>FUEL<br /><em>THE WORK.</em></h1><p>Build a plate that supports the work. Browse practical foods by type and compare the numbers per 100g.</p></div><div className="food-stamp"><strong>60</strong><span>FOODS /<br />START HERE</span></div></section><section className="menu-generator"><div className="menu-generator-heading"><div><span className="footer-label">DAILY MENU / 01 DAY</span><h2>RANDOMIZE<br /><em>THE PLATE.</em></h2><p>A balanced example with protein at every meal, carbohydrate for training fuel, greens for volume, and plant foods for variety.</p></div><button className="red-action" onClick={() => setMenu(buildRandomMenu())}>RANDOMIZE MENU <span>↻</span></button></div><div className="menu-totals"><strong>{totals.kcal}<small>KCAL / DAY</small></strong><b>{totals.grams}G<small>TOTAL FOOD</small></b><b>{totals.protein}g<small>PROTEIN</small></b><b>{totals.carbs}g<small>CARBS</small></b><b>{totals.fat}g<small>FAT</small></b></div><div className="menu-meals">{menu.map((meal) => <article key={meal.meal}><div className="meal-heading"><span>{meal.meal}</span><strong>{meal.items.reduce((sum, item) => sum + item.kcal, 0)} KCAL · {meal.items.reduce((sum, item) => sum + item.grams, 0)}G</strong></div>{meal.items.map((item) => <div className="menu-item" key={`${meal.meal}-${item.name}`}><span>{foodNames[item.name] || item.name}</span><small>{item.grams}G · {item.protein}G PROTEIN · {item.carbs}G CARBS · {item.fat}G FAT</small></div>)}</article>)}</div><p className="menu-note">Example only. Energy and protein needs vary by body size, goals, training load, and health status. Adjust portions with a qualified professional when needed.</p></section><div className="food-filters" aria-label="Food categories">{categories.map((item) => <button className={category === item ? 'selected' : ''} key={item} onClick={() => setCategory(item)}>{categoryLabels[item]}</button>)}</div><section className="food-grid">{visibleFoods.map(([type, name, kcal, protein, carbs, fat, image]) => { const displayName = foodNames[name] || name; const macro = (value) => value == null ? '0' : `${value}g`; return <article className="food-card" key={name}><div className="food-image"><img src={image} alt={`Cartoon illustration of ${displayName}`} /></div><div className="food-card-info"><span>{categoryLabels[type]}</span><h2>{displayName}</h2><div className="food-macros"><strong>{kcal}<small>KCAL</small></strong><b>{macro(protein)}<small>PROTEIN</small></b><b>{macro(carbs)}<small>CARBS</small></b><b>{macro(fat)}<small>FAT</small></b></div></div></article>; })}</section><p className="food-note">Nutrition values are approximate per 100g and vary by preparation and product. Greens include kcal only in the supplied data, so their other macros are shown as 0.</p></main>;
+  useScrollReveal(".subpage-shell");
+  const [category, setCategory] = useState("ALL");
+  const [menu, setMenu] = useState([]);
+  const [menuReady, setMenuReady] = useState(false);
+  const [favoriteFoodIds, setFavoriteFoodIds] = useState([]);
+  useEffect(() => {
+    document.documentElement.dataset.theme =
+      readStorage(STORAGE_KEYS.theme, "light") === "dark" ? "dark" : "light";
+    const value = readUserStorage(STORAGE_KEYS.favorites, []);
+    setFavoriteFoodIds(Array.isArray(value) ? value : []);
+    setMenu(buildRandomMenu());
+    setMenuReady(true);
+  }, []);
+  const toggleFavorite = (name) => {
+    setFavoriteFoodIds((current) => {
+      const next = current.includes(name)
+        ? current.filter((item) => item !== name)
+        : [...current, name];
+      writeUserStorage(STORAGE_KEYS.favorites, next);
+      return next;
+    });
+  };
+  const markFoodMediaUnavailable = (event) => {
+    event.currentTarget.hidden = true;
+    event.currentTarget.parentElement?.classList.add("media-failed");
+  };
+  const categories = ["ALL", "PROTEIN", "CARBS", "GREENS", "PLANT"];
+  const visibleFoods = useMemo(
+    () =>
+      category === "ALL" ? foods : foods.filter((food) => food[0] === category),
+    [category],
+  );
+  const totals = menu
+    .flatMap((meal) => meal.items)
+    .reduce(
+      (sum, item) => ({
+        grams: sum.grams + item.grams,
+        kcal: sum.kcal + item.kcal,
+        protein: sum.protein + item.protein,
+        carbs: sum.carbs + item.carbs,
+        fat: sum.fat + item.fat,
+      }),
+      { grams: 0, kcal: 0, protein: 0, carbs: 0, fat: 0 },
+    );
+  return (
+    <main className="subpage-shell">
+      <a className="skip-link" href="#food-library">
+        SKIP TO FOOD LIBRARY
+      </a>
+      <header className="subpage-header">
+        <a className="wordmark" href="/">
+          <span className="mark">F</span> FITFLOW
+        </a>
+        <a className="back-link" href="/">
+          ← BACK TO HOME
+        </a>
+      </header>
+      <section className="food-hero">
+        <div>
+          <span className="footer-label">04 / NUTRITION MODE</span>
+          <h1>
+            FUEL
+            <br />
+            <em>THE WORK.</em>
+          </h1>
+          <p>
+            Build a plate that supports the work. Browse practical foods by type
+            and compare the numbers per 100g.
+          </p>
+        </div>
+        <div className="food-stamp">
+          <strong>60</strong>
+          <span>
+            FOODS /<br />
+            START HERE
+          </span>
+        </div>
+      </section>
+      <section className="menu-generator">
+        <div className="menu-generator-heading">
+          <div>
+            <span className="footer-label">DAILY MENU / 01 DAY</span>
+            <h2>
+              RANDOMIZE
+              <br />
+              <em>THE PLATE.</em>
+            </h2>
+            <p>
+              A balanced example with protein at every meal, carbohydrate for
+              training fuel, greens for volume, and plant foods for variety.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="red-action"
+            onClick={() => {
+              setMenu(buildRandomMenu());
+              setMenuReady(true);
+            }}
+          >
+            RANDOMIZE MENU <span>↻</span>
+          </button>
+        </div>
+        {menuReady ? (
+          <>
+            <div className="menu-totals">
+              <strong>
+                {totals.kcal}
+                <small>KCAL / DAY</small>
+              </strong>
+              <b>
+                {totals.grams}G<small>TOTAL FOOD</small>
+              </b>
+              <b>
+                {totals.protein}g<small>PROTEIN</small>
+              </b>
+              <b>
+                {totals.carbs}g<small>CARBS</small>
+              </b>
+              <b>
+                {totals.fat}g<small>FAT</small>
+              </b>
+            </div>
+            <div className="menu-meals">
+              {menu.map((meal) => (
+                <article key={meal.meal}>
+                  <div className="meal-heading">
+                    <span>{meal.meal}</span>
+                    <strong>
+                      {meal.items.reduce((sum, item) => sum + item.kcal, 0)}{" "}
+                      KCAL ·{" "}
+                      {meal.items.reduce((sum, item) => sum + item.grams, 0)}G
+                    </strong>
+                  </div>
+                  {meal.items.map((item, itemIndex) => (
+                    <div
+                      className="menu-item"
+                      key={`${meal.meal}-${item.type}-${item.name}-${itemIndex}`}
+                    >
+                      <span>{foodNames[item.name] || item.name}</span>
+                      <small>
+                        {item.grams}G · {item.protein}G PROTEIN · {item.carbs}G
+                        CARBS · {item.fat}G FAT
+                      </small>
+                    </div>
+                  ))}
+                </article>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="menu-loading" role="status">
+            BUILDING A BALANCED MENU…
+          </div>
+        )}
+        <p className="menu-note">
+          Example only. Energy and protein needs vary by body size, goals,
+          training load, and health status. Adjust portions with a qualified
+          professional when needed.
+        </p>
+      </section>
+      <div className="food-filters" aria-label="Food categories">
+        {categories.map((item) => (
+          <button
+            type="button"
+            aria-pressed={category === item}
+            className={category === item ? "selected" : ""}
+            key={item}
+            onClick={() => setCategory(item)}
+          >
+            {categoryLabels[item]}
+          </button>
+        ))}
+      </div>
+      <section className="food-grid" id="food-library">
+        {visibleFoods.map(([type, name, kcal, protein, carbs, fat, image]) => {
+          const displayName = foodNames[name] || name;
+          const macro = (value) => (value == null ? "0" : `${value}g`);
+          const saved = favoriteFoodIds.includes(name);
+          return (
+            <article className="food-card" key={name}>
+              <div className="food-image">
+                <img
+                  loading="lazy"
+                  decoding="async"
+                  src={image}
+                  alt={`Cartoon illustration of ${displayName}`}
+                  onError={markFoodMediaUnavailable}
+                />
+                <span className="media-fallback" aria-hidden="true">
+                  FOOD IMAGE UNAVAILABLE
+                </span>
+              </div>
+              <div className="food-card-info">
+                <button
+                  className="food-favorite"
+                  type="button"
+                  aria-pressed={saved}
+                  aria-label={`${saved ? "Remove" : "Save"} ${displayName} ${saved ? "from" : "to"} favorite foods`}
+                  onClick={() => toggleFavorite(name)}
+                >
+                  {saved ? "SAVED FOOD" : "SAVE FOOD"}
+                </button>
+                <span>{categoryLabels[type]}</span>
+                <h2>{displayName}</h2>
+                <div className="food-macros">
+                  <strong>
+                    {kcal}
+                    <small>KCAL</small>
+                  </strong>
+                  <b>
+                    {macro(protein)}
+                    <small>PROTEIN</small>
+                  </b>
+                  <b>
+                    {macro(carbs)}
+                    <small>CARBS</small>
+                  </b>
+                  <b>
+                    {macro(fat)}
+                    <small>FAT</small>
+                  </b>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </section>
+      <p className="food-note">
+        Nutrition values are approximate per 100g and vary by preparation and
+        product. Greens include kcal only in the supplied data, so their other
+        macros are shown as 0.
+      </p>
+    </main>
+  );
 }
