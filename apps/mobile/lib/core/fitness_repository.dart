@@ -2,6 +2,7 @@ import 'package:fitflow_contracts/fitflow_contracts.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'fitness_data.dart';
 
 import '../features/home/domain/models/today_exercise_item.dart';
@@ -174,7 +175,10 @@ class FitnessRepository extends ChangeNotifier {
 
   FitflowProfile get profile => _profile;
   bool get onboardingComplete => _onboardingComplete;
-  bool get authComplete => _authComplete;
+  bool get authComplete => _authComplete || FirebaseAuth.instance.currentUser != null;
+  User? get currentFirebaseUser => FirebaseAuth.instance.currentUser;
+  String? get userEmail => FirebaseAuth.instance.currentUser?.email;
+  String? get userName => FirebaseAuth.instance.currentUser?.displayName;
   List<FoodRecord> get foods => catalogFoods;
   List<ExerciseRecord> get exercises => catalogExercises;
   List<ProgramRecord> get programs => catalogPrograms;
@@ -453,6 +457,16 @@ class FitnessRepository extends ChangeNotifier {
             (value) => FitflowProfile.fromJson(Map<String, dynamic>.from(
                 jsonDecode(value as String) as Map))) ??
         _profile;
+
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser != null) {
+      _authComplete = true;
+      if (fbUser.displayName != null &&
+          fbUser.displayName!.trim().isNotEmpty &&
+          _profile.name.trim().isEmpty) {
+        _profile = _profile.copyWith(name: fbUser.displayName!.trim());
+      }
+    }
     _currentWeight = double.tryParse(_profile.weightKg) ?? _currentWeight;
     _history = records('fitflow.workout_history', HistoryRecord.fromJson);
     _meals = records('fitflow.meals', MealRecord.fromJson);
@@ -527,9 +541,13 @@ class FitnessRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Local-only sign out: user-owned records stay on device until cloud sync
-  /// is configured, while the next launch goes through profile setup again.
+  /// Sign out: signs out of Firebase Auth and clears local session.
   Future<void> signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      debugPrint('Firebase signOut error: $e');
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('fitflow.onboarding_complete', false);
     await prefs.setBool('fitflow.auth_complete', false);

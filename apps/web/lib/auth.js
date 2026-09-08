@@ -1,4 +1,12 @@
 import { DEFAULT_PROFILE, validateProfile } from '@fitflow/contracts';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  updateProfile as updateFirebaseProfile,
+  sendPasswordResetEmail,
+} from 'firebase/auth';
+import { auth } from './firebase.js';
 
 const USERS_KEY = 'fitflow-auth-users';
 const LEGACY_USER_KEY = 'fitflow-auth-user';
@@ -69,11 +77,49 @@ export async function register({ name, email, password }) {
   if (!normalizedEmail.includes('@')) return { ok: false, error: 'Enter a valid email address.' };
   const passwordError = validatePassword(password);
   if (passwordError) return { ok: false, error: passwordError };
+
+  let firebaseUid = null;
+  if (typeof window !== 'undefined' && auth) {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+      if (cred?.user) {
+        firebaseUid = cred.user.uid;
+        if (name) {
+          try {
+            await updateFirebaseProfile(cred.user, { displayName: name });
+          } catch {}
+        }
+      }
+    } catch (fbError) {
+      if (fbError.code === 'auth/email-already-in-use') {
+        return { ok: false, error: 'Email này đã được đăng ký trên hệ thống FITFLOW.' };
+      }
+      if (fbError.code === 'auth/invalid-email') {
+        return { ok: false, error: 'Địa chỉ email không hợp lệ.' };
+      }
+      if (fbError.code === 'auth/weak-password') {
+        return { ok: false, error: 'Mật khẩu quá yếu (yêu cầu ít nhất 6 ký tự).' };
+      }
+      if (fbError.code === 'auth/operation-not-allowed') {
+        return { ok: false, error: 'Chưa kích hoạt Email/Password trên Firebase Console (Authentication > Sign-in method).' };
+      }
+      console.warn('Firebase Auth registration notice:', fbError?.message);
+    }
+  }
+
   const users = readUsers();
   if (users[normalizedEmail]) return { ok: false, error: 'An account already exists on this device.' };
 
   const salt = randomToken(16);
-  const user = { name: String(name || 'FITFLOW member').trim().slice(0, 60) || 'FITFLOW member', email: normalizedEmail, profile: { ...EMPTY_PROFILE }, salt, passwordHash: await hashPassword(password, salt), createdAt: new Date().toISOString() };
+  const user = {
+    name: String(name || 'FITFLOW member').trim().slice(0, 60) || 'FITFLOW member',
+    email: normalizedEmail,
+    profile: { ...EMPTY_PROFILE },
+    salt,
+    passwordHash: await hashPassword(password, salt),
+    createdAt: new Date().toISOString(),
+    firebaseUid,
+  };
   write(USERS_KEY, { ...users, [normalizedEmail]: user });
   createSession(user);
   return { ok: true, user: publicUser(user) };
@@ -81,7 +127,52 @@ export async function register({ name, email, password }) {
 
 export async function login({ email, password }) {
   const normalizedEmail = normalizeEmail(email);
-  const user = readUsers()[normalizedEmail];
+  let firebaseUser = null;
+
+  if (typeof window !== 'undefined' && auth) {
+    try {
+      const cred = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      firebaseUser = cred.user;
+    } catch (fbError) {
+      if (
+        fbError.code === 'auth/user-not-found' ||
+        fbError.code === 'auth/wrong-password' ||
+        fbError.code === 'auth/invalid-credential'
+      ) {
+        return { ok: false, error: 'Email hoặc mật khẩu không chính xác.' };
+      }
+      if (fbError.code === 'auth/too-many-requests') {
+        return { ok: false, error: 'Quá nhiều lần thử thất bại. Vui lòng thử lại sau.' };
+      }
+      if (fbError.code === 'auth/user-disabled') {
+        return { ok: false, error: 'Tài khoản này đã bị tạm khóa.' };
+      }
+      console.warn('Firebase Auth login notice:', fbError?.message);
+    }
+  }
+
+  const users = readUsers();
+  let user = users[normalizedEmail];
+
+  if (firebaseUser) {
+    // If account was created on Mobile or another device, auto-register in local storage for Web!
+    if (!user) {
+      const salt = randomToken(16);
+      user = {
+        name: firebaseUser.displayName || 'FITFLOW member',
+        email: normalizedEmail,
+        profile: { ...EMPTY_PROFILE },
+        salt,
+        passwordHash: await hashPassword(password, salt),
+        createdAt: new Date().toISOString(),
+        firebaseUid: firebaseUser.uid,
+      };
+      write(USERS_KEY, { ...users, [normalizedEmail]: user });
+    }
+    createSession(user);
+    return { ok: true, user: publicUser(user) };
+  }
+
   if (!user || user.email !== normalizedEmail) return { ok: false, error: 'Email or password is incorrect.' };
   const passwordHash = await hashPassword(password, user.salt);
   if (passwordHash !== user.passwordHash) return { ok: false, error: 'Email or password is incorrect.' };
@@ -90,6 +181,11 @@ export async function login({ email, password }) {
 }
 
 export function logout() {
+  if (typeof window !== 'undefined' && auth) {
+    try {
+      firebaseSignOut(auth).catch(() => {});
+    } catch {}
+  }
   remove(SESSION_KEY);
 }
 
@@ -141,6 +237,13 @@ export function updateProfile({ name, profile }) {
 
 export async function requestPasswordReset(email) {
   const normalizedEmail = normalizeEmail(email);
+  if (typeof window !== 'undefined' && auth && normalizedEmail.includes('@')) {
+    try {
+      await sendPasswordResetEmail(auth, normalizedEmail);
+    } catch (fbError) {
+      console.warn('Firebase reset notice:', fbError?.message);
+    }
+  }
   const user = readUsers()[normalizedEmail];
   if (!user || user.email !== normalizedEmail) return { ok: true, message: 'If an account exists on this device, a reset link is ready.' };
   const token = randomToken(32);

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/fitness_repository.dart';
 import '../../../../core/theme/app_colors.dart';
 
-/// Authentication screen (Login / Register) that shows before onboarding.
-/// Simplified: no real backend — pressing "Đăng nhập" or "Tạo tài khoản"
-/// marks the auth as complete and proceeds to the onboarding / main app.
+/// Authentication screen (Login / Register) with Firebase Authentication.
+/// Connects to the same fitflow-ungvinh Firebase backend as the Web app.
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -54,15 +54,135 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     _fadeCtrl.forward();
   }
 
+  void _showFeedback(String message, {bool isError = true}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError ? AppColors.primaryRed : const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  Future<void> _forgotPassword() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      _showFeedback('Vui lòng nhập địa chỉ email để nhận liên kết khôi phục.');
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      _showFeedback(
+        'Đã gửi liên kết khôi phục mật khẩu vào hộp thư $email.',
+        isError: false,
+      );
+    } on FirebaseAuthException catch (e) {
+      _showFeedback(e.message ?? 'Không thể gửi email đặt lại mật khẩu.');
+    }
+  }
+
   Future<void> _submit() async {
     HapticFeedback.mediumImpact();
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
 
-    // Mark auth done — app proceeds to onboarding (handled by AppEntryGate)
-    await fitnessRepository.markAuthComplete();
-    setState(() => _isLoading = false);
+    if (email.isEmpty || !email.contains('@')) {
+      _showFeedback('Vui lòng nhập địa chỉ email hợp lệ.');
+      return;
+    }
+    if (password.length < 6) {
+      _showFeedback('Mật khẩu cần tối thiểu 6 ký tự.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (_isLogin) {
+        final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        if (cred.user != null) {
+          final displayName = cred.user!.displayName;
+          if (displayName != null && displayName.isNotEmpty) {
+            await fitnessRepository.updateProfile(
+              fitnessRepository.profile.copyWith(name: displayName),
+            );
+          }
+          await fitnessRepository.markAuthComplete();
+        }
+      } else {
+        final name = _nameCtrl.text.trim();
+        final confirm = _confirmCtrl.text;
+
+        if (name.isEmpty) {
+          setState(() => _isLoading = false);
+          _showFeedback('Vui lòng nhập họ và tên của bạn.');
+          return;
+        }
+        if (password != confirm) {
+          setState(() => _isLoading = false);
+          _showFeedback('Mật khẩu xác nhận không khớp.');
+          return;
+        }
+
+        final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        if (cred.user != null) {
+          await cred.user!.updateDisplayName(name);
+          await fitnessRepository.updateProfile(
+            fitnessRepository.profile.copyWith(name: name),
+          );
+          await fitnessRepository.markAuthComplete();
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Đã có lỗi xảy ra. Vui lòng thử lại.';
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        message = 'Email hoặc mật khẩu không chính xác.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'Email này đã được đăng ký. Vui lòng chuyển sang Đăng nhập.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Địa chỉ email không hợp lệ.';
+      } else if (e.code == 'weak-password') {
+        message = 'Mật khẩu quá yếu (yêu cầu ít nhất 6 ký tự).';
+      } else if (e.code == 'operation-not-allowed') {
+        message =
+            'Chưa bật Email/Password trên Firebase Console (Authentication > Sign-in method).';
+      } else if (e.code == 'network-request-failed') {
+        message = 'Lỗi kết nối mạng. Vui lòng kiểm tra internet.';
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        message = e.message!;
+      }
+      _showFeedback(message);
+    } catch (e) {
+      _showFeedback('Lỗi xác thực: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -251,7 +371,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: _isLoading ? null : _forgotPassword,
                           child: Text(
                             'Quên mật khẩu?',
                             style: TextStyle(

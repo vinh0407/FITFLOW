@@ -89,6 +89,41 @@ class FitflowProfile {
         trainingLevel: '${json['trainingLevel'] ?? 'BEGINNER'}',
         daysPerWeek: '${json['daysPerWeek'] ?? '3'}',
       );
+
+  FitflowProfile copyWith({
+    String? name,
+    String? gender,
+    String? age,
+    String? heightCm,
+    String? weightKg,
+    String? targetWeightKg,
+    String? experience,
+    List<String>? equipment,
+    List<String>? focusAreas,
+    String? sessionMinutes,
+    String? restingHeartRate,
+    String? healthNotes,
+    String? trainingGoal,
+    String? trainingLevel,
+    String? daysPerWeek,
+  }) =>
+      FitflowProfile(
+        name: name ?? this.name,
+        gender: gender ?? this.gender,
+        age: age ?? this.age,
+        heightCm: heightCm ?? this.heightCm,
+        weightKg: weightKg ?? this.weightKg,
+        targetWeightKg: targetWeightKg ?? this.targetWeightKg,
+        experience: experience ?? this.experience,
+        equipment: equipment ?? this.equipment,
+        focusAreas: focusAreas ?? this.focusAreas,
+        sessionMinutes: sessionMinutes ?? this.sessionMinutes,
+        restingHeartRate: restingHeartRate ?? this.restingHeartRate,
+        healthNotes: healthNotes ?? this.healthNotes,
+        trainingGoal: trainingGoal ?? this.trainingGoal,
+        trainingLevel: trainingLevel ?? this.trainingLevel,
+        daysPerWeek: daysPerWeek ?? this.daysPerWeek,
+      );
 }
 
 @immutable
