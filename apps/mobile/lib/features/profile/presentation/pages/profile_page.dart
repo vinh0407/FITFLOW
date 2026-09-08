@@ -347,7 +347,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 const Center(
                   child: Text(
-                    'VINCECORE FITNESS v2.4.0\nTRAIN SMARTER. MOVE BETTER.',
+                    'FITFLOW FITNESS v2.4.0\nTRAIN SMARTER. MOVE BETTER.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.textDisabled,

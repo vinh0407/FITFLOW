@@ -137,7 +137,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'VINCECORE',
+                              'FITFLOW',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,

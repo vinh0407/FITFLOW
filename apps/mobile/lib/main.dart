@@ -26,7 +26,7 @@ class VinceCoreApp extends StatelessWidget {
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: fitnessRepository,
         builder: (context, _) => MaterialApp(
-          title: 'VINCECORE',
+          title: 'FITFLOW',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
