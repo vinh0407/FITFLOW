@@ -10,11 +10,20 @@ import 'features/nutrition/presentation/pages/nutrition_page.dart';
 import 'features/progress/presentation/pages/progress_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
 import 'features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/fitness_repository.dart';
 import 'widgets/ai_workout_bottom_sheet.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization: $e');
+  }
   await fitnessRepository.load();
   runApp(const VinceCoreApp());
 }
