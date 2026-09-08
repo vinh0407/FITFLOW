@@ -17,6 +17,7 @@ import {
 } from "@fitflow/contracts";
 import { useScrollReveal } from "../lib/scroll-reveal";
 import { useModalAccessibility } from "../lib/modal-accessibility";
+import WorkoutWizardModal from "../components/WorkoutWizardModal";
 
 const bodyParts = [
   "ALL",
@@ -760,6 +761,16 @@ export default function Home() {
   const [donateOpen, setDonateOpen] = useState(false);
   const [plan365Open, setPlan365Open] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("wizard") === "1" || params.get("onboarding") === "1") {
+        setWizardOpen(true);
+      }
+    }
+  }, []);
 
   const loadExercises = () => {
     const requestId = exerciseRequest.current + 1;
@@ -888,6 +899,7 @@ export default function Home() {
 
   const closeTopModal = useCallback(() => {
     if (logoutConfirmOpen) setLogoutConfirmOpen(false);
+    else if (wizardOpen) setWizardOpen(false);
     else if (activeCalculator) setActiveCalculator(null);
     else if (workoutOpen) setWorkoutOpen(false);
     else if (selectedExercise) setSelectedExercise(null);
@@ -896,6 +908,7 @@ export default function Home() {
     else if (donateOpen) setDonateOpen(false);
   }, [
     logoutConfirmOpen,
+    wizardOpen,
     activeCalculator,
     workoutOpen,
     selectedExercise,
@@ -905,6 +918,7 @@ export default function Home() {
   ]);
   useModalAccessibility(
     Boolean(
+      wizardOpen ||
       workoutOpen ||
       selectedExercise ||
       profileOpen ||
@@ -1812,6 +1826,13 @@ export default function Home() {
               <span>
                 Start today&apos;s session and your sets will appear here.
               </span>
+              <button
+                type="button"
+                className="let-start-button"
+                onClick={() => setWizardOpen(true)}
+              >
+                LET&apos;S START <span>→</span>
+              </button>
             </div>
           )}
         </div>
@@ -2659,6 +2680,14 @@ export default function Home() {
           </section>
         </div>
       )}
+      <WorkoutWizardModal
+        isOpen={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onStartWorkout={(exercises) => {
+          setWizardOpen(false);
+          startWorkout(exercises);
+        }}
+      />
       {profileOpen && profileDraft && (
         <div className="modal-backdrop" onClick={() => setProfileOpen(false)}>
           <section

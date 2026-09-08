@@ -44,7 +44,8 @@ export default function AuthPage() {
       }
       if (mode === 'reset') result = await resetPassword({ email, token, password });
       if (!result?.ok) setError(result?.error || 'Something went wrong. Try again.');
-      else if (mode === 'login' || mode === 'register' || mode === 'reset') window.location.assign('/account');
+      else if (mode === 'register') window.location.assign('/?wizard=1');
+      else if (mode === 'login' || mode === 'reset') window.location.assign('/account');
       else setMessage(result.message);
     } catch {
       setError('This device could not complete the request. Try again.');
@@ -65,6 +66,12 @@ export default function AuthPage() {
           <label>EMAIL<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
           {mode === 'reset' && <label>RESET TOKEN<input value={token} onChange={(event) => setToken(event.target.value)} autoComplete="one-time-code" required /></label>}
           {mode !== 'forgot' && <label>PASSWORD<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required /><small>8+ characters, one letter, one number.</small></label>}
+          {mode === 'register' && (
+            <div className="auth-wizard-tip">
+              <span className="tip-badge">🎯 CÁ NHÂN HÓA LỘ TRÌNH</span>
+              <p>Ngay sau khi đăng ký, bạn sẽ được chọn dụng cụ tập luyện và các nhóm cơ cần cải thiện để FITFLOW tự động phân tích và tạo bài tập phù hợp nhất.</p>
+            </div>
+          )}
           {error && <p className="auth-feedback auth-error" role="alert">{error}</p>}
           {message && <p className="auth-feedback auth-success" role="status">{message}</p>}
           {resetLink && <div className="auth-reset-link"><span>LOCAL RESET LINK</span><a href={resetLink}>OPEN RESET FORM →</a></div>}
