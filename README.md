@@ -71,7 +71,7 @@ flowchart TB
 
 ## Key Features
 
-### ⚡ Intelligent Workout Builder (Workout Wizard)
+### Intelligent Workout Builder (Workout Wizard)
 - **3-Step Calibration Matrix**: Equipment setup $\rightarrow$ Anatomical muscle selection $\rightarrow$ Fine-tuned movement matrix.
 - **Interactive Dual-View Body Map**: Vector SVG diagrams of **Anterior (Front)** and **Posterior (Back)** muscle groups with real-time selection and hazard-red highlights.
 - **Dynamic Volume Customization**: Choose between 3, 4, 5, 6, or 8 target exercises per workout.
@@ -80,17 +80,17 @@ flowchart TB
 - **Kinetic Synergy Engine**: Detects primary movement patterns (e.g. Pull/Lats) and suggests complementary muscle groups (Biceps, Upper Back) with a 1-click apply trigger.
 - **Controlled Generation**: Starts with a clean initial state (no auto-picked exercises) letting the athlete generate calibrated routines or pick movements manually.
 
-### 📚 Biomechanical Exercise Library
+### Biomechanical Exercise Library
 - **1,324 Movement Database**: Server-filtered search by muscle target, equipment, and movement category.
 - **Motion Demonstrations**: Lazy-loaded animated media, muscle involvement diagrams, and form cues.
 - **Shuffle & Replace**: Swap any exercise within a generated session for an equivalent biomechanical alternative.
 
-### 🥗 Nutrition Engine & Meal Architect
+### Nutrition Engine & Meal Architect
 - Curated food library with macronutrient breakdowns per 100g.
 - Automated daily meal generator balancing caloric goals, protein thresholds, and micro-diversity.
 - Custom food entry and local food favorites registry.
 
-### 🧮 Comprehensive Biometric Calculators
+### Comprehensive Biometric Calculators
 - **BMI & Category Matrix**: Standard & metric calculations with BMI 18–35 guidance.
 - **TDEE (Total Daily Energy Expenditure)**: Harris-Benedict and Mifflin-St Jeor formulas.
 - **1RM (One Rep Max) Predictor**: Epley, Brzycki, and Lombardi load estimations.
@@ -98,7 +98,7 @@ flowchart TB
 - **Target Heart-Rate Zones**: Karvonen formula zone targeting (Aerobic, Anaerobic, VO2 Max).
 - **Navy Body Fat Estimator**: Circumference-based body composition analysis.
 
-### 🔐 Unified Cross-Platform Authentication
+### Unified Cross-Platform Authentication
 - Powered by **Firebase Authentication** (`fitflow-ungvinh`).
 - Single account works seamlessly across both Web and Mobile apps.
 - Local-first architecture guarantees zero lockouts: accounts fall back gracefully to local storage if offline.
@@ -112,16 +112,16 @@ The Workout Builder modal (`apps/web/components/WorkoutWizardModal.jsx`) follows
 ```
 [01 EQUIPMENT]                [02 TARGET MUSCLES]               [03 EXERCISE MATRIX]
 ┌──────────────────┐          ┌──────────────────────┐          ┌────────────────────┐
-│ Bodyweight Only  │          │ Anterior / Posterior │          │ [⚡ GENERATE]       │
+│ Bodyweight Only  │          │ Anterior / Posterior │          │ [ GENERATE]        │
 │ Dumbbells / Bar  │   ───>   │ Body Map Selection   │   ───>   │ 6 Movements Loaded │
-│ Cable / Machines │          │ 🎲 Random Split      │          │ Shuffle / Reorder  │
-│ Pull-Up / Bands  │          │ ⚡ Recovery Warning  │          │ Start Workout →    │
+│ Cable / Machines │          │ Random Split         │          │ Shuffle / Reorder  │
+│ Pull-Up / Bands  │          │ Recovery Warning     │          │ Start Workout →    │
 └──────────────────┘          └──────────────────────┘          └────────────────────┘
 ```
 
 ### Biomechanical Intelligence Highlights:
 1. **No Accidental Pre-Picks**: Step 3 initializes clean with an empty matrix. Athletes choose between generating calibrated movements or manually adding from the catalog.
-2. **Yesterday Recovery Shield**: Tracks workout logs within the last 48 hours. If chest/shoulders were worked yesterday, an advisory banner flags them and marks muscles with `⚡`.
+2. **Yesterday Recovery Shield**: Tracks workout logs within the last 48 hours. If chest/shoulders were worked yesterday, an advisory banner flags them and marks muscles .
 3. **Synergy Pairings**:
    - **PULL**: Suggests pairing *Lats & Back* with *Biceps* and *Upper Back/Traps* to complete the kinetic chain.
    - **PUSH**: Suggests pairing *Chest* with *Shoulders* and *Triceps* for cohesive pressing power.
@@ -234,11 +234,11 @@ flutter analyze
 ```
 
 ### Test Suite Highlights:
-- ✅ Profile update persistence and decimal precision retention.
-- ✅ Local storage crash resilience & quota overflow recovery.
-- ✅ Firebase authentication sign-in, account creation, and password resets.
-- ✅ 365-day export workbook stream handling & XSS string sanitization.
-- ✅ Scoped storage isolation ensuring multi-user data confidentiality.
+- Profile update persistence and decimal precision retention.
+- Local storage crash resilience & quota overflow recovery.
+- Firebase authentication sign-in, account creation, and password resets.
+- 365-day export workbook stream handling & XSS string sanitization.
+- Scoped storage isolation ensuring multi-user data confidentiality.
 
 ---
 
